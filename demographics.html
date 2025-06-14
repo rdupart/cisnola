@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Demographics</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 0;
+      color: #333;
+      min-height: 100vh;
+    }
+    h1 {
+      text-align: center;
+      margin-top: 32px;
+      font-size: 2.5rem;
+      color: #0057B8;
+      letter-spacing: 1px;
+    }
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin: 24px 0 32px 0;
+      flex-wrap: wrap;
+    }
+    label {
+      font-weight: 600;
+      margin-right: 8px;
+      color: #0057B8;
+    }
+    select {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #b0b8c1;
+      background: #fff;
+      font-size: 1rem;
+      transition: border 0.2s;
+    }
+    select:focus {
+      border: 1.5px solid #0057B8;
+      outline: none;
+    }
+    .charts-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 32px;
+      max-width: 900px;
+      margin: 0 auto 40px auto;
+      padding: 0 20px;
+    }
+    .chart-box {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0, 87, 184, 0.07);
+      padding: 18px 18px 8px 18px;
+      transition: box-shadow 0.2s;
+      margin-bottom: 6px;
+      border-top: 3px solid #0057B8;
+    }
+    .chart-box:hover {
+      box-shadow: 0 6px 24px rgba(0, 87, 184, 0.17);
+    }
+    h2 {
+      color: #0057B8;
+      text-align: center;
+      font-size: 1.3rem;
+      margin-top: 0;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+    .tab-navigation {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+      gap: 10px;
+    }
+    .tab-button {
+      padding: 8px 16px;
+      background-color: #f0f0f0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .tab-button.active {
+      background-color: #0057B8;
+      color: white;
+      border-color: #0057B8;
+    }
+    .tab-content {
+      display: none;
+      max-width: 900px;
+      margin: 0 auto 40px auto;
+      padding: 0 20px;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.55rem; }
+      .tab-navigation { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="controls" style="margin-top: 20px;">
+    <label for="schoolSelect">Select School:</label>
+    <select id="schoolSelect" onchange="updateCharts()">
+      <option value="all">All Schools</option>
+    </select>
+
+    <label for="yearSelect">Select Year:</label>
+    <select id="yearSelect" onchange="updateCharts()">
+      <option value="2023-2024">2023-2024</option>
+      <option value="2022-2023">2022-2023</option>
+      <option value="2021-2022">2021-2022</option>
+      <option value="2020-2021">2020-2021</option>
+      <option value="2019-2020">2019-2020</option>
+      <option value="2018-2019">2018-2019</option>
+      <option value="2017-2018">2017-2018</option>
+    </select>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <button class="tab-button" data-tab="gender-tab">Gender Distribution</button>
+    <button class="tab-button" data-tab="race-tab">Race Distribution</button>
+  </div>
+  
+  <!-- Tab Content -->
+  <div class="tab-content" id="gender-tab">
+    <div class="chart-box">
+      <h2>Gender Distribution</h2>
+      <div id="genderChart"></div>
+    </div>
+  </div>
+  
+  <div class="tab-content" id="race-tab">
+    <div class="chart-box">
+      <h2>Race Distribution</h2>
+      <div id="raceChart"></div>
+    </div>
+  </div>
+
+
+  <script>
+    const csvUrls = {
+      "2023-2024": 'student_data/CIS_EOY_2023_2024 - Student Data.csv',
+      "2022-2023": 'student_data/CIS_EOY_2022_2023 - Student Data.csv',
+      "2021-2022": 'student_data/CIS_EOY_2021_2022 - Student Data.csv',
+      "2020-2021": 'student_data/CIS_EOY_2020_2021 - Student Data.csv',
+      "2019-2020": 'student_data/CIS_EOY_2019_2020 - Student Data.csv',
+      "2018-2019": 'student_data/CIS_EOY_2018_2019 - Student Data.csv',
+      "2017-2018": 'student_data/CIS_EOY_2017_2018 - Student Data.csv'
+    };
+
+    let allData = [];
+
+    // Load all CSV files
+    function loadAllCSVs() {
+      // Disable controls while loading
+      document.querySelectorAll('select').forEach(select => select.disabled = true);
+      
+      const yearSelect = document.getElementById('yearSelect');
+      const selectedYear = yearSelect.value;
+      const url = csvUrls[selectedYear];
+      
+      console.log(`Loading data for ${selectedYear} from ${url}`);
+      
+      Papa.parse(url, {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          if (results.errors.length > 0 && results.errors[0].code !== 'UndetectableDelimiter') {
+            console.error('Error parsing CSV:', results.errors);
+            document.querySelectorAll('select').forEach(select => select.disabled = false);
+            return;
+          }
+          
+          // Store data
+          allData = results.data.map(row => ({
+            ...row,
+            year: selectedYear
+          }));
+          
+          console.log(`Loaded ${allData.length} rows for ${selectedYear}`);
+          
+          // Enable controls
+          document.querySelectorAll('select').forEach(select => select.disabled = false);
+          
+          // Populate school dropdown
+          populateSchoolDropdown();
+        },
+        error: function(error) {
+          console.error('Error loading CSV:', error);
+          document.querySelectorAll('select').forEach(select => select.disabled = false);
+        }
+      });
+    }
+
+    // Populate the school dropdown
+    function populateSchoolDropdown() {
+      // Get unique schools
+      const schools = [];
+      allData.forEach(row => {
+        // Check both 'School Name' and 'School Where Support Was Provided' columns
+        const school = row['School Name'] || row['School Where Support Was Provided'];
+        if (school && !schools.includes(school)) {
+          schools.push(school);
+        }
+      });
+      
+      // Sort schools alphabetically
+      schools.sort();
+      
+      const schoolSelect = document.getElementById('schoolSelect');
+      schoolSelect.innerHTML = '<option value="all">All Schools</option>';
+      schools.forEach(school => {
+        const option = document.createElement('option');
+        option.value = school;
+        option.textContent = school;
+        schoolSelect.appendChild(option);
+      });
+    }
+
+    // Update the charts based on selected school and year
+    function updateCharts() {
+      // Get the active tab
+      const activeTab = document.querySelector('.tab-button.active');
+      if (!activeTab) return;
+      
+      const tabId = activeTab.getAttribute('data-tab');
+      
+      // Only update charts for the active tab
+      if (tabId === 'gender-tab') {
+        updateGenderChart();
+      } else if (tabId === 'race-tab') {
+        updateRaceChart();
+      }
+    }
+    
+    function getFilteredData() {
+      const selectedSchool = document.getElementById('schoolSelect').value;
+      const selectedYear = document.getElementById('yearSelect').value;
+      
+      // Filter data by school and year
+      return allData.filter(row => {
+        if (selectedSchool === 'all') {
+          return row.year === selectedYear;
+        }
+        // Check both 'School Name' and 'School Where Support Was Provided' columns
+        const schoolName = row['School Name'] || row['School Where Support Was Provided'];
+        return row.year === selectedYear && schoolName === selectedSchool;
+      });
+    }
+    
+    function updateGenderChart() {
+      const filtered = getFilteredData();
+
+      // === Gender Distribution (collapsed) ===
+      const genderFields = [
+          'Students, Female',
+          'Students, Male',
+          'Students, Other Gender',
+          'Students, Unknown Gender'
+      ];
+
+      // Gender categories and matching prefixes
+      const genderLabels = ['Female', 'Male', 'Other', 'Unknown'];
+      const genderPrefixes = [
+          'Students, Female - ',
+          'Students, Male - ',
+          'Students, Other Gender - ',
+          'Students, Unknown Gender - '
+      ];
+
+      // For each gender, sum over all race columns
+      const genderCounts = genderPrefixes.map(prefix => {
+          return filtered.reduce((sum, row) => {
+              // Sum only columns that start with this prefix
+              const matchingCols = Object.keys(row).filter(key => key.startsWith(prefix));
+              const genderTotal = matchingCols.reduce((colSum, key) => {
+                  const val = parseFloat(row[key]);
+                  return colSum + (isNaN(val) ? 0 : val);
+              }, 0);
+              return sum + genderTotal;
+          }, 0);
+      });
+
+      console.log("Gender Counts:", genderCounts);
+
+      if (genderCounts.every(val => val === 0)) {
+          document.getElementById('genderChart').innerHTML = '<p>No gender data available for this selection.</p>';
+          return;
+      }
+
+      // Plot gender chart
+      Plotly.newPlot('genderChart', [{
+          values: genderCounts,
+          labels: genderLabels,
+          type: 'pie',
+          textinfo: 'label+percent',
+          textposition: 'inside',
+          hole: 0.4,
+          marker: {
+            colors: ['#0057B8', '#E31B23', '#FFC72C', '#00A9E0']
+          }
+        }], {
+          title: {
+            text: 'Gender Distribution',
+            font: { size: 20, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' },
+            xref: 'paper',
+            x: 0.5,
+          },
+          showlegend: true,
+          paper_bgcolor: '#fff',
+          plot_bgcolor: '#fff',
+          legend: {
+            orientation: 'h',
+            y: -0.2,
+            x: 0.5,
+            xanchor: 'center',
+            font: { size: 14, color: '#222' }
+          },
+          margin: { t: 60, l: 40, r: 20, b: 60 },
+          responsive: true,
+        }, {responsive: true});
+
+    // === Race Distribution (collapsed across genders) ===
+    const raceLabels = [
+        'American Indian',
+        'Asian',
+        'Black',
+        'Hispanic',
+        'White',
+        'Native Hawaiian/Other Pacific Islander',
+        'Two or More Races',
+        'Other Race',
+        'Unknown Race'
+    ];
+
+    const raceCounts = raceLabels.map(race => {
+        return filtered.reduce((sum, row) => {
+        // Loop through all genders and sum the values for each race
+        return sum + ['Female', 'Male', 'Other Gender', 'Unknown Gender'].reduce((gSum, gender) => {
+            const col = `Students, ${gender} - ${race}`.trim().replace(/\s+/g, ' ');
+            const val = parseFloat(row[col]);
+            return gSum + (isNaN(val) ? 0 : val);
+        }, 0);
+        }, 0);
+    });
+
+    Plotly.newPlot('raceChart', [{
+      values: raceCounts,
+      labels: raceLabels,
+      type: 'pie',
+      textinfo: 'label+percent',
+      textposition: 'inside',
+      hole: 0.4,
+      marker: {
+        colors: [
+          '#0057B8', '#E31B23', '#FFC72C', '#00A9E0', '#78BE20', '#6E2585', '#F7941E', '#4D4F53', '#939598'
+        ]
+      }
+    }], {
+      title: {
+        text: 'Race Distribution',
+        font: { size: 20, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' },
+        xref: 'paper',
+        x: 0.5,
+      },
+      showlegend: true,
+      paper_bgcolor: '#fff',
+      plot_bgcolor: '#fff',
+      legend: {
+        orientation: 'h',
+        y: -0.2,
+        x: 0.5,
+        xanchor: 'center',
+        font: { size: 14, color: '#222' }
+      },
+      margin: { t: 60, l: 40, r: 20, b: 60 },
+      responsive: true,
+    }, {responsive: true});
+    }
+
+    // Add tab functionality to lazy load charts
+    const tabs = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Hide all tab contents
+        tabContents.forEach(content => {
+          content.style.display = 'none';
+        });
+        
+        // Remove active class from all tabs
+        tabs.forEach(t => {
+          t.classList.remove('active');
+        });
+        
+        // Show the selected tab content
+        const tabId = tab.getAttribute('data-tab');
+        document.getElementById(tabId).style.display = 'block';
+        tab.classList.add('active');
+        
+        // Only load charts for the active tab
+        if (tabId === 'gender-tab') {
+          updateGenderChart();
+        } else if (tabId === 'race-tab') {
+          updateRaceChart();
+        }
+      });
+    });
+    
+    // Load initial data
+    loadAllCSVs();
+    
+    // Activate the first tab by default
+    if (tabs.length > 0) {
+      tabs[0].click();
+    }
+  </script>
+</body>
+</html>
