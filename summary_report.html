@@ -229,89 +229,180 @@
       (school === 'all' || d['School Name'] === school)
     );
 
-    const sumField = (field) =>
-      filtered.reduce((sum, row) => sum + (parseFloat(row[field]) || 0), 0);
+    if (filtered.length === 0) {
+      // Show no data message
+      document.getElementById('enrollment').textContent = '0';
+      document.getElementById('served').textContent = '0';
+      document.getElementById('parents').textContent = '0';
+      
+      // Clear charts
+      document.getElementById('supportPie').innerHTML = '<p>No data available for selected filters</p>';
+      document.getElementById('parentTrend').innerHTML = '<p>No trend data available</p>';
+      document.getElementById('stackedSupport').innerHTML = '<p>No support data available</p>';
+      document.getElementById('outcomeChart').innerHTML = '<p>No outcome data available</p>';
+      return;
+    }
 
-    document.getElementById('enrollment').textContent = sumField('Student Enrollment');
-    document.getElementById('served').textContent = sumField('Total Students Served');
-    document.getElementById('parents').textContent = sumField('Parents Engaged');
+    // Helper function to sum numeric values from a field across filtered data
+    const sumField = (field) => {
+      return filtered.reduce((sum, row) => {
+        const value = parseFloat(row[field]);
+        return sum + (isNaN(value) ? 0 : value);
+      }, 0);
+    };
 
-    Plotly.newPlot('supportPie', [{
-      labels: ['Case Managed', 'Non-Case Managed', 'ONLY WS Supports'],
-      values: [
-        sumField('Case Managed Students'),
-        sumField('Non-Case Managed Students'),
-        sumField('Number of Students w/ ONLY WS Supports')
-      ],
-      type: 'pie',
-      hole: 0.4
-    }]);
+    // Use actual column names from student data CSV
+    const enrollment = sumField('Student Enrollment') || filtered.length; // Fallback to count
+    const totalServed = sumField('Total CM Students Served') || sumField('Case Managed Students') || 
+                       sumField('Total Students Served') || filtered.length;
+    const parentsEngaged = sumField('Parents Engaged') || sumField('Parent Engagement') || 0;
 
+    document.getElementById('enrollment').textContent = enrollment;
+    document.getElementById('served').textContent = totalServed;
+    document.getElementById('parents').textContent = parentsEngaged;
+
+    // Support distribution pie chart
+    const caseManaged = sumField('Case Managed Students') || sumField('Total CM Students Served') || 0;
+    const nonCaseManaged = sumField('Non-Case Managed Students') || sumField('Total Non-CM Students Served') || 0;
+    const wsOnlySupports = sumField('Number of Students w/ ONLY WS Supports') || sumField('WS Only Students') || 0;
+
+    if (caseManaged > 0 || nonCaseManaged > 0 || wsOnlySupports > 0) {
+      Plotly.newPlot('supportPie', [{
+        labels: ['Case Managed', 'Non-Case Managed', 'ONLY WS Supports'],
+        values: [caseManaged, nonCaseManaged, wsOnlySupports],
+        type: 'pie',
+        hole: 0.4,
+        marker: {
+          colors: ['#0057B8', '#E31B23', '#FFC72C']
+        },
+        textinfo: 'label+percent+value',
+        texttemplate: '%{label}<br>%{value} students<br>%{percent}'
+      }], {
+        title: {
+          text: 'Student Support Distribution',
+          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+        },
+        paper_bgcolor: '#fff',
+        plot_bgcolor: '#fff',
+        margin: { t: 60, b: 30, l: 30, r: 30 },
+        height: 400
+      }, {responsive: true});
+    } else {
+      document.getElementById('supportPie').innerHTML = 
+        '<div style="text-align: center; padding: 50px; color: #777;">No support distribution data available</div>';
+    }
+
+    // Parent engagement trend by year
     const parentTrendData = {};
     allData.forEach(row => {
       if (school === 'all' || row['School Name'] === school) {
         const y = row['Reporting Year'];
-        parentTrendData[y] = (parentTrendData[y] || 0) + (parseFloat(row['Parents Engaged']) || 0);
+        if (y) {
+          const parents = parseFloat(row['Parents Engaged']) || parseFloat(row['Parent Engagement']) || 0;
+          parentTrendData[y] = (parentTrendData[y] || 0) + parents;
+        }
       }
     });
 
     const years = Object.keys(parentTrendData).sort();
-    Plotly.newPlot('parentTrend', [{
-      x: years,
-      y: years.map(y => parentTrendData[y]),
-      type: 'bar'
-    }]);
+    if (years.length > 0 && Object.values(parentTrendData).some(v => v > 0)) {
+      Plotly.newPlot('parentTrend', [{
+        x: years.map(y => y.replace('_', '-')),
+        y: years.map(y => parentTrendData[y]),
+        type: 'bar',
+        marker: { color: '#78BE20' },
+        text: years.map(y => parentTrendData[y]),
+        textposition: 'auto'
+      }], {
+        title: {
+          text: 'Parent Engagement Trend',
+          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+        },
+        paper_bgcolor: '#fff',
+        plot_bgcolor: '#fff',
+        margin: { t: 60, b: 80, l: 50, r: 30 },
+        height: 400,
+        xaxis: { title: 'School Year' },
+        yaxis: { title: 'Parents Engaged' }
+      }, {responsive: true});
+    } else {
+      document.getElementById('parentTrend').innerHTML = 
+        '<div style="text-align: center; padding: 50px; color: #777;">No parent engagement trend data available</div>';
+    }
 
+    // Stacked support chart by year
     const supportStacked = {};
     allData.forEach(row => {
       if (school === 'all' || row['School Name'] === school) {
         const y = row['Reporting Year'];
-        supportStacked[y] = supportStacked[y] || { ws: 0, cm: 0 };
-        supportStacked[y].ws += parseFloat(row['Number of Students w/ ONLY WS Supports']) || 0;
-        supportStacked[y].cm += parseFloat(row['Case Managed Students']) || 0;
+        if (y) {
+          supportStacked[y] = supportStacked[y] || { ws: 0, cm: 0 };
+          supportStacked[y].ws += parseFloat(row['Number of Students w/ ONLY WS Supports']) || 
+                                 parseFloat(row['WS Only Students']) || 0;
+          supportStacked[y].cm += parseFloat(row['Case Managed Students']) || 
+                                 parseFloat(row['Total CM Students Served']) || 0;
+        }
       }
     });
 
     const supportYears = Object.keys(supportStacked).sort();
-    Plotly.newPlot('stackedSupport', [
-      {
-        name: 'ONLY WS Supports',
-        x: supportYears,
-        y: supportYears.map(y => supportStacked[y].ws),
-        type: 'bar'
-      },
-      {
-        name: 'Case Managed Students',
-        x: supportYears,
-        y: supportYears.map(y => supportStacked[y].cm),
-        type: 'bar'
-      }
-    ], { barmode: 'stack' });
+    if (supportYears.length > 0) {
+      Plotly.newPlot('stackedSupport', [
+        {
+          name: 'ONLY WS Supports',
+          x: supportYears.map(y => y.replace('_', '-')),
+          y: supportYears.map(y => supportStacked[y].ws),
+          type: 'bar',
+          marker: { color: '#FFC72C' }
+        },
+        {
+          name: 'Case Managed Students',
+          x: supportYears.map(y => y.replace('_', '-')),
+          y: supportYears.map(y => supportStacked[y].cm),
+          type: 'bar',
+          marker: { color: '#0057B8' }
+        }
+      ], { 
+        barmode: 'stack',
+        title: {
+          text: 'Support Types by Year',
+          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+        },
+        paper_bgcolor: '#fff',
+        plot_bgcolor: '#fff',
+        margin: { t: 60, b: 80, l: 50, r: 30 },
+        height: 400,
+        xaxis: { title: 'School Year' },
+        yaxis: { title: 'Number of Students' }
+      }, {responsive: true});
+    } else {
+      document.getElementById('stackedSupport').innerHTML = 
+        '<div style="text-align: center; padding: 50px; color: #777;">No stacked support data available</div>';
+    }
 
-    
-    // ---------------- OUTCOMES CHART -------------------
+    // Student outcomes chart
     const k11Cols = [
-    "K-11 Promoted", "K-11 Graduated", "K-11 Retained", "K-11 Dropped Out",
-    "K-11 Transferred", "K-11 GED", "K-11 Expelled", "K-11 Incarcerated",
-    "K-11 Deceased", "K-11 Other", "K-11 Unknown"
+      "K-11 Promoted", "K-11 Graduated", "K-11 Retained", "K-11 Dropped Out",
+      "K-11 Transferred", "K-11 GED", "K-11 Expelled", "K-11 Incarcerated",
+      "K-11 Deceased", "K-11 Other", "K-11 Unknown"
     ];
 
     const g12Cols = [
-    "Grade 12 Graduated", "Grade 12 Retained", "Grade 12 Dropped Out",
-    "Grade 12 Transferred", "Grade 12 GED", "Grade 12 Expelled"
+      "Grade 12 Graduated", "Grade 12 Retained", "Grade 12 Dropped Out",
+      "Grade 12 Transferred", "Grade 12 GED", "Grade 12 Expelled"
     ];
 
     function getNonZeroColumns(columns) {
-    const colSums = {};
-    columns.forEach(col => {
+      const colSums = {};
+      columns.forEach(col => {
         colSums[col] = sumField(col);
-    });
-    return Object.entries(colSums)
+      });
+      return Object.entries(colSums)
         .filter(([_, value]) => value > 0)
         .reduce((acc, [k, v]) => {
-        acc.labels.push(k.replace(/^K-11 |^Grade 12 /, ''));
-        acc.values.push(v);
-        return acc;
+          acc.labels.push(k.replace(/^K-11 |^Grade 12 /, ''));
+          acc.values.push(v);
+          return acc;
         }, { labels: [], values: [] });
     }
 
@@ -321,31 +412,44 @@
     const traces = [];
 
     if (k11Data.labels.length > 0) {
-    traces.push({
+      traces.push({
         name: 'K-11',
         x: k11Data.values,
         y: k11Data.labels,
         type: 'bar',
-        orientation: 'h'
-    });
+        orientation: 'h',
+        marker: { color: '#0057B8' }
+      });
     }
 
     if (g12Data.labels.length > 0) {
-    traces.push({
+      traces.push({
         name: 'Grade 12',
         x: g12Data.values,
         y: g12Data.labels,
         type: 'bar',
-        orientation: 'h'
-    });
+        orientation: 'h',
+        marker: { color: '#E31B23' }
+      });
     }
 
-    Plotly.newPlot('outcomeChart', traces, {
-    barmode: 'group',
-    margin: { l: 100 },
-    height: 400
-    });
-
+    if (traces.length > 0) {
+      Plotly.newPlot('outcomeChart', traces, {
+        barmode: 'group',
+        title: {
+          text: 'Student Outcomes by Category',
+          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+        },
+        paper_bgcolor: '#fff',
+        plot_bgcolor: '#fff',
+        margin: { l: 120, t: 60, b: 50, r: 30 },
+        height: 400,
+        xaxis: { title: 'Number of Students' }
+      }, {responsive: true});
+    } else {
+      document.getElementById('outcomeChart').innerHTML = 
+        '<div style="text-align: center; padding: 50px; color: #777;">No outcome data available for selected filters</div>';
+    }
   }
 
   loadAllCSVs();

@@ -213,14 +213,44 @@
         ? data 
         : data.filter(item => item['School Name'] === selectedSchool);
       
-      // Calculate key metrics
+      if (filteredData.length === 0) {
+        // Clear charts and show no data message
+        document.getElementById('total-students').textContent = '0';
+        document.getElementById('case-managed').textContent = '0';
+        document.getElementById('parents-engaged').textContent = '0';
+        document.getElementById('engagement-rate').textContent = '0%';
+        
+        document.getElementById('engagement-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">No data available for selected school</div>';
+        document.getElementById('service-hours-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">No service hours data available</div>';
+        document.getElementById('risk-factors-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">No risk factors data available</div>';
+        return;
+      }
+      
+      // Calculate metrics using actual CSV columns
       const totalStudents = filteredData.length;
-      const caseManaged = filteredData.filter(item => item['Case Managed'] === 1 || 
-                                                     item['Case Managed'] === true || 
-                                                     item['Case Managed'] === 'Yes').length;
-      const parentsEngaged = filteredData.filter(item => item['Parent Engagement'] === 1 || 
-                                                        item['Parent Engagement'] === true || 
-                                                        item['Parent Engagement'] === 'Yes').length;
+      
+      // Calculate case managed students from actual data
+      let caseManaged = 0;
+      let parentsEngaged = 0;
+      
+      filteredData.forEach(row => {
+        // Count case managed students based on goals
+        const hasGoals = ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness']
+          .some(category => {
+            const goalCol = `${category}: CM students w/ goal`;
+            return (parseInt(row[goalCol]) || 0) > 0;
+          });
+        
+        if (hasGoals) caseManaged++;
+        
+        // Count parent engagement
+        if (parseInt(row['Parents Engaged']) > 0 || 
+            parseInt(row['Parent Engagement']) > 0 ||
+            row['Parent Engagement'] === 'Yes') {
+          parentsEngaged++;
+        }
+      });
+      
       const engagementRate = totalStudents > 0 ? Math.round((caseManaged / totalStudents) * 100) : 0;
       
       // Update metric cards
@@ -243,8 +273,8 @@
         marker: {
           colors: ['#0057B8', '#E31B23']
         },
-        textinfo: 'label+percent',
-        texttemplate: '%{label}: %{percent}'
+        textinfo: 'label+percent+value',
+        texttemplate: '%{label}<br>%{value} students<br>%{percent}'
       }], {
         title: {
           text: 'Student Engagement Distribution',
@@ -252,89 +282,101 @@
         },
         paper_bgcolor: '#fff',
         plot_bgcolor: '#fff',
-        margin: { t: 50, b: 30, l: 30, r: 30 }
-      });
+        margin: { t: 60, b: 30, l: 30, r: 30 },
+        height: 400
+      }, {responsive: true});
       
-      // Create service hours trend chart
+      // Create service goals trend chart by year
       const years = Object.keys(allYearsData).sort().reverse();
-      const serviceHoursByYear = years.map(year => {
-        const yearData = selectedSchool === 'all' 
-          ? allYearsData[year] 
-          : allYearsData[year].filter(item => item['School Name'] === selectedSchool);
+      const goalsByYear = years.map(year => {
+        const yearData = allYearsData[year] || [];
+        const yearFiltered = selectedSchool === 'all' 
+          ? yearData 
+          : yearData.filter(item => item['School Name'] === selectedSchool);
         
-        // Sum up service hours (this is a placeholder - adjust based on actual column names)
-        let totalHours = 0;
-        yearData.forEach(item => {
-          if (item['Service Hours']) totalHours += parseFloat(item['Service Hours']) || 0;
-          if (item['Total Support Hours']) totalHours += parseFloat(item['Total Support Hours']) || 0;
+        // Sum up goals across all categories
+        let totalGoals = 0;
+        yearFiltered.forEach(item => {
+          ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness']
+            .forEach(category => {
+              const goalCol = `${category}: CM students w/ goal`;
+              totalGoals += parseInt(item[goalCol]) || 0;
+            });
         });
         
-        return totalHours;
+        return totalGoals;
       });
       
-      Plotly.newPlot('service-hours-chart', [{
-        x: years.map(y => y.replace('_', '-')),
-        y: serviceHoursByYear,
-        type: 'bar',
-        marker: {
-          color: '#00A9E0'
-        }
-      }], {
-        title: {
-          text: 'Service Hours by Year',
-          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
-        },
-        paper_bgcolor: '#fff',
-        plot_bgcolor: '#fff',
-        margin: { t: 50, b: 50, l: 50, r: 30 },
-        xaxis: {
-          title: 'School Year'
-        },
-        yaxis: {
-          title: 'Total Service Hours'
-        }
+      if (years.length > 0 && goalsByYear.some(val => val > 0)) {
+        Plotly.newPlot('service-hours-chart', [{
+          x: years.map(y => y.replace(/[_-]/g, '-')),
+          y: goalsByYear,
+          type: 'bar',
+          marker: {
+            color: '#00A9E0'
+          },
+          text: goalsByYear,
+          textposition: 'auto'
+        }], {
+          title: {
+            text: 'Student Goals Set by Year',
+            font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+          },
+          paper_bgcolor: '#fff',
+          plot_bgcolor: '#fff',
+          margin: { t: 60, b: 80, l: 50, r: 30 },
+          height: 400,
+          xaxis: {
+            title: 'School Year'
+          },
+          yaxis: {
+            title: 'Total Goals Set'
+          }
+        }, {responsive: true});
+      } else {
+        document.getElementById('service-hours-chart').innerHTML = 
+          '<div style="text-align: center; padding: 50px; color: #777;">No goal trend data available</div>';
+      }
+      
+      // Create support categories chart (risk factors equivalent)
+      const supportCategories = ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness'];
+      
+      const categoryCounts = supportCategories.map(category => {
+        const goalCol = `${category}: CM students w/ goal`;
+        return filteredData.reduce((sum, row) => sum + (parseInt(row[goalCol]) || 0), 0);
       });
       
-      // Create risk factors chart
-      // This is a placeholder - adjust based on actual column names
-      const riskFactors = [
-        'Academic Risk', 
-        'Attendance Risk', 
-        'Behavior Risk', 
-        'Social Risk',
-        'Family Risk'
-      ];
-      
-      const riskCounts = riskFactors.map(factor => {
-        return filteredData.filter(item => 
-          item[factor] === 1 || 
-          item[factor] === true || 
-          item[factor] === 'Yes'
-        ).length;
-      });
-      
-      Plotly.newPlot('risk-factors-chart', [{
-        x: riskFactors,
-        y: riskCounts,
-        type: 'bar',
-        marker: {
-          color: '#FFC72C'
-        }
-      }], {
-        title: {
-          text: 'Student Risk Factors',
-          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
-        },
-        paper_bgcolor: '#fff',
-        plot_bgcolor: '#fff',
-        margin: { t: 50, b: 50, l: 50, r: 30 },
-        xaxis: {
-          title: 'Risk Factor'
-        },
-        yaxis: {
-          title: 'Number of Students'
-        }
-      });
+      if (categoryCounts.some(val => val > 0)) {
+        Plotly.newPlot('risk-factors-chart', [{
+          x: supportCategories,
+          y: categoryCounts,
+          type: 'bar',
+          marker: {
+            color: '#FFC72C'
+          },
+          text: categoryCounts,
+          textposition: 'auto'
+        }], {
+          title: {
+            text: 'Student Support Categories',
+            font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+          },
+          paper_bgcolor: '#fff',
+          plot_bgcolor: '#fff',
+          margin: { t: 60, b: 100, l: 50, r: 30 },
+          height: 400,
+          xaxis: {
+            title: 'Support Category',
+            tickangle: -45
+          },
+          yaxis: {
+            title: 'Number of Students with Goals'
+          }
+        }, {responsive: true});
+      } else {
+        document.getElementById('risk-factors-chart').innerHTML = 
+          '<div style="text-align: center; padding: 50px; color: #777;">No support category data available</div>';
+      }
     }
 
     // Initialize the dashboard

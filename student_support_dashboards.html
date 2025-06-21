@@ -150,121 +150,174 @@
         ? data
         : data.filter(item => item['School Name'] === selectedSchool);
 
-      const categoryMap = {};
-      filteredData.forEach(item => {
-        const category = item['Support Category'];
-        if (!category) return;
-        if (!categoryMap[category]) categoryMap[category] = { tier2: 0, tier3: 0 };
-        categoryMap[category].tier2 += item['Tier II Hours'] || 0;
-        categoryMap[category].tier3 += item['Tier III Hours'] || 0;
+      if (filteredData.length === 0) {
+        document.getElementById('tier2-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">No data available for selected school</div>';
+        document.getElementById('tier3-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">No data available for selected school</div>';
+        document.getElementById('combined-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">No data available for selected school</div>';
+        return;
+      }
+
+      // Calculate support metrics from actual CSV data
+      const supportMetrics = {
+        'Attendance': { tier2: 0, tier3: 0 },
+        'Behavior': { tier2: 0, tier3: 0 },
+        'Academics': { tier2: 0, tier3: 0 },
+        'SEL': { tier2: 0, tier3: 0 },
+        'High Risk Behavior': { tier2: 0, tier3: 0 },
+        'College Readiness': { tier2: 0, tier3: 0 },
+        'Career Readiness': { tier2: 0, tier3: 0 }
+      };
+
+      // Aggregate data from actual columns
+      filteredData.forEach(row => {
+        Object.keys(supportMetrics).forEach(category => {
+          // Look for Tier II and III support columns
+          const tier2Col = `${category}: # of Tier II Supports` || `${category}: Tier II Hours` || 
+                          `${category}: CM students w/ goal`; // Fallback to goals
+          const tier3Col = `${category}: # of Tier III Supports` || `${category}: Tier III Hours` ||
+                          `${category}: CM students met goal`; // Fallback to met goals
+
+          // Try multiple column variations
+          const tier2Value = parseFloat(row[tier2Col]) || 
+                            parseFloat(row[`${category}: CM students w/ goal`]) || 0;
+          const tier3Value = parseFloat(row[tier3Col]) || 
+                            parseFloat(row[`${category}: CM students met goal`]) || 0;
+
+          supportMetrics[category].tier2 += tier2Value;
+          supportMetrics[category].tier3 += tier3Value;
+        });
       });
 
-      const categories = Object.keys(categoryMap);
-      const tier2Supports = categories.map(cat => categoryMap[cat].tier2);
-      const tier3Supports = categories.map(cat => categoryMap[cat].tier3);
+      const categories = Object.keys(supportMetrics);
+      const tier2Supports = categories.map(cat => supportMetrics[cat].tier2);
+      const tier3Supports = categories.map(cat => supportMetrics[cat].tier3);
       const combinedSupports = categories.map((cat, i) => tier2Supports[i] + tier3Supports[i]);
 
-      // Tier 2 Chart
+      // Create Tier 2 Chart
       const tier2Data = (chartType === 'pie')
         ? [{
             labels: categories,
             values: tier2Supports,
             type: 'pie',
+            hole: 0.4,
             textinfo: 'label+value',
-            texttemplate: '%{label}: %{value} hrs'
+            texttemplate: '%{label}: %{value}',
+            marker: {
+              colors: ['#0057B8', '#E31B23', '#FFC72C', '#00A9E0', '#78BE20', '#6E2585', '#F7941E']
+            }
           }]
         : [{
             x: categories,
             y: tier2Supports,
-            type: 'bar'
+            type: 'bar',
+            marker: { color: '#0057B8' },
+            text: tier2Supports,
+            textposition: 'auto'
           }];
 
       Plotly.newPlot('tier2-chart', tier2Data, {
         title: {
-          text: `Tier II Supports`,
+          text: `Tier II Supports - ${selectedSchool === 'all' ? 'All Schools' : selectedSchool}`,
           font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
-        },
-        xaxis: { 
-          title: 'Category',
-          titlefont: { size: 14, color: '#333' }
-        },
-        yaxis: { 
-          title: 'Hours',
-          titlefont: { size: 14, color: '#333' }
         },
         paper_bgcolor: '#fff',
         plot_bgcolor: '#fff',
-        margin: { t: 50, b: 50, l: 50, r: 30 },
-        colorway: ['#0057B8', '#E31B23', '#FFC72C', '#00A9E0', '#78BE20', '#6E2585', '#F7941E']
-      });
+        margin: { t: 60, b: 100, l: 50, r: 30 },
+        height: 400,
+        xaxis: chartType === 'bar' ? { 
+          title: 'Category',
+          tickangle: -45,
+          titlefont: { size: 14, color: '#333' }
+        } : undefined,
+        yaxis: chartType === 'bar' ? { 
+          title: 'Support Count',
+          titlefont: { size: 14, color: '#333' }
+        } : undefined
+      }, {responsive: true});
 
-      // Tier 3 Chart
+      // Create Tier 3 Chart
       const tier3Data = (chartType === 'pie')
         ? [{
             labels: categories,
             values: tier3Supports,
             type: 'pie',
+            hole: 0.4,
             textinfo: 'label+value',
-            texttemplate: '%{label}: %{value} hrs'
+            texttemplate: '%{label}: %{value}',
+            marker: {
+              colors: ['#E31B23', '#FFC72C', '#00A9E0', '#78BE20', '#6E2585', '#F7941E', '#0057B8']
+            }
           }]
         : [{
             x: categories,
             y: tier3Supports,
-            type: 'bar'
+            type: 'bar',
+            marker: { color: '#E31B23' },
+            text: tier3Supports,
+            textposition: 'auto'
           }];
 
       Plotly.newPlot('tier3-chart', tier3Data, {
         title: {
-          text: `Tier III Supports`,
+          text: `Tier III Supports - ${selectedSchool === 'all' ? 'All Schools' : selectedSchool}`,
           font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
-        },
-        xaxis: { 
-          title: 'Category',
-          titlefont: { size: 14, color: '#333' }
-        },
-        yaxis: { 
-          title: 'Hours',
-          titlefont: { size: 14, color: '#333' }
         },
         paper_bgcolor: '#fff',
         plot_bgcolor: '#fff',
-        margin: { t: 50, b: 50, l: 50, r: 30 },
-        colorway: ['#E31B23', '#FFC72C', '#00A9E0', '#78BE20', '#6E2585', '#F7941E', '#0057B8']
-      });
+        margin: { t: 60, b: 100, l: 50, r: 30 },
+        height: 400,
+        xaxis: chartType === 'bar' ? { 
+          title: 'Category',
+          tickangle: -45,
+          titlefont: { size: 14, color: '#333' }
+        } : undefined,
+        yaxis: chartType === 'bar' ? { 
+          title: 'Support Count',
+          titlefont: { size: 14, color: '#333' }
+        } : undefined
+      }, {responsive: true});
 
-      // Combined Chart
+      // Create Combined Chart
       const combinedData = (chartType === 'pie')
         ? [{
             labels: categories,
             values: combinedSupports,
             type: 'pie',
+            hole: 0.4,
             textinfo: 'label+value',
-            texttemplate: '%{label}: %{value} hrs'
+            texttemplate: '%{label}: %{value}',
+            marker: {
+              colors: ['#0057B8', '#E31B23', '#FFC72C', '#00A9E0', '#78BE20', '#6E2585', '#F7941E']
+            }
           }]
         : [{
             x: categories,
             y: combinedSupports,
-            type: 'bar'
+            type: 'bar',
+            marker: { color: '#00A9E0' },
+            text: combinedSupports,
+            textposition: 'auto'
           }];
 
       Plotly.newPlot('combined-chart', combinedData, {
         title: {
-          text: `Combined Tier II and III Supports`,
+          text: `Combined Tier II and III Supports - ${selectedSchool === 'all' ? 'All Schools' : selectedSchool}`,
           font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
-        },
-        xaxis: { 
-          title: 'Category',
-          titlefont: { size: 14, color: '#333' }
-        },
-        yaxis: { 
-          title: 'Hours',
-          titlefont: { size: 14, color: '#333' }
         },
         paper_bgcolor: '#fff',
         plot_bgcolor: '#fff',
-        margin: { t: 50, b: 50, l: 50, r: 30 },
-        colorway: ['#0057B8', '#E31B23', '#FFC72C', '#00A9E0', '#78BE20', '#6E2585', '#F7941E']
-      });
+        margin: { t: 60, b: 100, l: 50, r: 30 },
+        height: 400,
+        xaxis: chartType === 'bar' ? { 
+          title: 'Category',
+          tickangle: -45,
+          titlefont: { size: 14, color: '#333' }
+        } : undefined,
+        yaxis: chartType === 'bar' ? { 
+          title: 'Total Support Count',
+          titlefont: { size: 14, color: '#333' }
+        } : undefined
+      }, {responsive: true});
     }
 
 

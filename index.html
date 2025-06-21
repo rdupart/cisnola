@@ -121,7 +121,6 @@
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">Current Dashboards</a>
         <ul class="dropdown-menu">
-          <li><a href="dashboards/caseload.html">Caseload Buildup</a></li>
           <li><a href="dashboards/support-profiles.html">Support Profiles</a></li>
           <li><a href="dashboards/referral-reasons.html">Referral Reasons</a></li>
         </ul>
@@ -131,7 +130,7 @@
         <ul class="dropdown-menu">
           <li><a href="annual/students-served.html">Students Served</a></li>
           <li><a href="school_goals.html">Schoolwide Goals</a></li>
-          <li><a href="tier_support_activites.html">Tier I Supports</a></li>
+          <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
           <li><a href="goals.html">Student Goals</a></li>
           <li><a href="demographics.html">Demographics</a></li>
           <li><a href="attributes.html">Student Attributes</a></li>
@@ -147,8 +146,8 @@
           <li><a href="#annual-outcomes">Annual Outcomes</a></li>
           <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
           <li><a href="tier_activities.html">Tier Activities</a></li>
-          <li><a href="tiers.html">Tier II</a></li>
-          <li><a href="tiers.html">Tier III</a></li>
+          <li><a href="tier_activities.html">Tier II</a></li>
+          <li><a href="tier_support_activites.html">Tier III</a></li>
           <li><a href="student_progress_tracker.html">Student Progress Tracker</a></li>
         </ul>
       </li>
@@ -192,13 +191,13 @@
           <div class="link-group">
             <h4>Tier Support Activities</h4>
             <p>Explore data on tier support activities across schools and years.</p>
-            <a href="annual/tier-supports.html" class="dashboard-link">View Tier Support Activities</a>
+            <a href="tier_support_activites.html" class="dashboard-link">View Tier Support Activities</a>
           </div>
           
           <div class="link-group">
-            <h4>Caseload Demographics</h4>
+            <h4>Demographics</h4>
             <p>Analyze demographic information about our student caseload.</p>
-            <a href="annual/caseload-demographics.html" class="dashboard-link">View Caseload Demographics</a>
+            <a href="demographics.html" class="dashboard-link">View Demographics</a>
           </div>
           
           <div class="link-group">
@@ -281,6 +280,7 @@
   
   <!-- Summary Report Scripts -->
   <script>
+  // CSV URLs for student data (not school data)
   const csvUrls = {
     "2023-2024": 'student_data/CIS_EOY_2023_2024 - Student Data.csv',
     "2022-2023": 'student_data/CIS_EOY_2022_2023 - Student Data.csv',
@@ -294,28 +294,40 @@
   let allData = [];
 
   function loadAllCSVs() {
-    // Disable controls while loading
-    document.querySelectorAll('select').forEach(select => select.disabled = true);
+    console.log("Loading student data for dashboard...");
     
+    // Show loading message
+    const loadingMsg = '<div style="text-align: center; padding: 20px;">Loading data...</div>';
+    document.getElementById('supportPie').innerHTML = loadingMsg;
+    document.getElementById('parentTrend').innerHTML = loadingMsg;
+    document.getElementById('stackedSupport').innerHTML = loadingMsg;
+    document.getElementById('outcomeChart').innerHTML = loadingMsg;
+    
+    // Disable controls
+    document.querySelectorAll('select').forEach(select => select.disabled = true);
+
     const filePromises = Object.entries(csvUrls).map(([yearKey, url]) =>
       new Promise((resolve, reject) => {
         Papa.parse(url, {
           download: true,
           header: true,
-          dynamicTyping: true,
           skipEmptyLines: true,
           complete: function(results) {
             if (results.errors.length > 0) {
-              console.error('Error parsing CSV:', results.errors);
-              reject(results.errors);
-              return;
+              console.warn(`CSV parsing warnings for ${yearKey}:`, results.errors);
             }
             
-            resolve({ year: yearKey, data: results.data });
+            // Add year to each record
+            const dataWithYear = results.data.map(row => ({
+              ...row,
+              'Reporting Year': yearKey
+            }));
+            
+            resolve({ year: yearKey, data: dataWithYear });
           },
           error: function(error) {
-            console.error('Error loading CSV:', error);
-            reject(error);
+            console.error(`Error loading CSV for ${yearKey}:`, error);
+            resolve({ year: yearKey, data: [] }); // Continue with empty data rather than fail
           }
         });
       }));
@@ -324,6 +336,7 @@
       .then(results => {
         // Combine all data into one array
         allData = results.flatMap(result => result.data);
+        console.log("Loaded", allData.length, "total student records");
         
         // Enable controls
         document.querySelectorAll('select').forEach(select => select.disabled = false);
@@ -337,20 +350,19 @@
       .catch(error => {
         console.error('Error loading data:', error);
         document.querySelectorAll('select').forEach(select => select.disabled = false);
+        
+        // Show error messages
+        const errorMsg = '<div style="text-align: center; padding: 20px; color: #dc3545;">Error loading data</div>';
+        document.getElementById('supportPie').innerHTML = errorMsg;
+        document.getElementById('parentTrend').innerHTML = errorMsg;
+        document.getElementById('stackedSupport').innerHTML = errorMsg;
+        document.getElementById('outcomeChart').innerHTML = errorMsg;
       });
   }
 
   function populateSchoolDropdown() {
     // Get unique schools
-    const schools = [];
-    allData.forEach(row => {
-      const school = row['School Name'];
-      if (school && !schools.includes(school)) {
-        schools.push(school);
-      }
-    });
-    
-    // Sort schools alphabetically
+    const schools = [...new Set(allData.map(row => row['School Name']).filter(Boolean))];
     schools.sort();
     
     // Populate dropdown
@@ -373,121 +385,202 @@
       (school === 'all' || d['School Name'] === school)
     );
 
-    const sumField = (field) =>
-      filtered.reduce((sum, row) => sum + (parseFloat(row[field]) || 0), 0);
+    if (filtered.length === 0) {
+      const noDataMsg = '<div style="text-align: center; padding: 20px; color: #6c757d;">No data available for selected filters</div>';
+      document.getElementById('supportPie').innerHTML = noDataMsg;
+      document.getElementById('parentTrend').innerHTML = noDataMsg;
+      document.getElementById('stackedSupport').innerHTML = noDataMsg;
+      document.getElementById('outcomeChart').innerHTML = noDataMsg;
+      
+      document.getElementById('enrollment').textContent = '0';
+      document.getElementById('served').textContent = '0';
+      document.getElementById('parents').textContent = '0';
+      return;
+    }
 
-    document.getElementById('enrollment').textContent = sumField('Student Enrollment');
-    document.getElementById('served').textContent = sumField('Total Students Served');
-    document.getElementById('parents').textContent = sumField('Parents Engaged');
+    // Calculate metrics from student-level data
+    const totalStudents = filtered.length;
+    
+    // Count case managed students (those with any goals)
+    const caseManaged = filtered.filter(row => {
+      return ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness']
+        .some(category => parseInt(row[`${category}: CM students w/ goal`]) > 0);
+    }).length;
+    
+    // Count parent engagement
+    const parentsEngaged = filtered.filter(row => 
+      parseInt(row['Parents Engaged']) > 0 || 
+      row['Parent Engagement'] === 'Yes' ||
+      row['Parent Engagement'] === '1'
+    ).length;
 
-    Plotly.newPlot('supportPie', [{
-      labels: ['Case Managed', 'Non-Case Managed', 'ONLY WS Supports'],
-      values: [
-        sumField('Case Managed Students'),
-        sumField('Non-Case Managed Students'),
-        sumField('Number of Students w/ ONLY WS Supports')
-      ],
-      type: 'pie',
-      hole: 0.4
-    }]);
+    document.getElementById('enrollment').textContent = totalStudents;
+    document.getElementById('served').textContent = caseManaged;
+    document.getElementById('parents').textContent = parentsEngaged;
 
+    // Support distribution pie chart
+    const nonCaseManaged = totalStudents - caseManaged;
+    const wsOnlyStudents = Math.max(0, filtered.filter(row => 
+      row['WS Only'] === 'Yes' || 
+      parseInt(row['WS Only Students']) > 0
+    ).length);
+
+    if (totalStudents > 0) {
+      Plotly.newPlot('supportPie', [{
+        labels: ['Case Managed', 'Non-Case Managed', 'WS Only'],
+        values: [caseManaged, nonCaseManaged, wsOnlyStudents],
+        type: 'pie',
+        hole: 0.4,
+        marker: {
+          colors: ['#0057B8', '#E31B23', '#FFC72C']
+        },
+        textinfo: 'label+percent+value',
+        texttemplate: '%{label}<br>%{value} students<br>%{percent}'
+      }], {
+        title: {
+          text: 'Student Support Distribution',
+          font: { size: 16, color: '#0057B8' }
+        },
+        margin: { t: 50, b: 30, l: 30, r: 30 },
+        height: 300
+      }, {responsive: true});
+    }
+
+    // Parent engagement trend by year
     const parentTrendData = {};
+    const yearlyData = {};
+    
     allData.forEach(row => {
       if (school === 'all' || row['School Name'] === school) {
         const y = row['Reporting Year'];
-        parentTrendData[y] = (parentTrendData[y] || 0) + (parseFloat(row['Parents Engaged']) || 0);
+        if (y) {
+          yearlyData[y] = yearlyData[y] || [];
+          yearlyData[y].push(row);
+        }
       }
+    });
+
+    Object.keys(yearlyData).forEach(y => {
+      const yearStudents = yearlyData[y];
+      const parentsCount = yearStudents.filter(row => 
+        parseInt(row['Parents Engaged']) > 0 || 
+        row['Parent Engagement'] === 'Yes' ||
+        row['Parent Engagement'] === '1'
+      ).length;
+      parentTrendData[y] = parentsCount;
     });
 
     const years = Object.keys(parentTrendData).sort();
-    Plotly.newPlot('parentTrend', [{
-      x: years,
-      y: years.map(y => parentTrendData[y]),
-      type: 'bar'
-    }]);
+    if (years.length > 0) {
+      Plotly.newPlot('parentTrend', [{
+        x: years.map(y => y.replace(/[_-]/g, '-')),
+        y: years.map(y => parentTrendData[y]),
+        type: 'bar',
+        marker: { color: '#78BE20' },
+        text: years.map(y => parentTrendData[y]),
+        textposition: 'auto'
+      }], {
+        title: {
+          text: 'Parent Engagement by Year',
+          font: { size: 16, color: '#0057B8' }
+        },
+        margin: { t: 50, b: 60, l: 50, r: 30 },
+        height: 300,
+        xaxis: { title: 'Year' },
+        yaxis: { title: 'Parents Engaged' }
+      }, {responsive: true});
+    }
 
+    // Support trends by year
     const supportStacked = {};
-    allData.forEach(row => {
-      if (school === 'all' || row['School Name'] === school) {
-        const y = row['Reporting Year'];
-        supportStacked[y] = supportStacked[y] || { ws: 0, cm: 0 };
-        supportStacked[y].ws += parseFloat(row['Number of Students w/ ONLY WS Supports']) || 0;
-        supportStacked[y].cm += parseFloat(row['Case Managed Students']) || 0;
-      }
+    Object.keys(yearlyData).forEach(y => {
+      const yearStudents = yearlyData[y];
+      const cmCount = yearStudents.filter(row => {
+        return ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness']
+          .some(category => parseInt(row[`${category}: CM students w/ goal`]) > 0);
+      }).length;
+      const wsCount = yearStudents.filter(row => 
+        row['WS Only'] === 'Yes' || parseInt(row['WS Only Students']) > 0
+      ).length;
+      
+      supportStacked[y] = { cm: cmCount, ws: wsCount };
     });
 
     const supportYears = Object.keys(supportStacked).sort();
-    Plotly.newPlot('stackedSupport', [
-      {
-        name: 'ONLY WS Supports',
-        x: supportYears,
-        y: supportYears.map(y => supportStacked[y].ws),
-        type: 'bar'
-      },
-      {
-        name: 'Case Managed Students',
-        x: supportYears,
-        y: supportYears.map(y => supportStacked[y].cm),
-        type: 'bar'
-      }
-    ], { barmode: 'stack' });
-
-    // ---------------- OUTCOMES CHART -------------------
-    const k11Cols = [
-      "K-11 Promoted", "K-11 Graduated", "K-11 Retained", "K-11 Dropped Out",
-      "K-11 Transferred", "K-11 GED", "K-11 Expelled", "K-11 Incarcerated",
-      "K-11 Deceased", "K-11 Other", "K-11 Unknown"
-    ];
-
-    const g12Cols = [
-      "Grade 12 Graduated", "Grade 12 Retained", "Grade 12 Dropped Out",
-      "Grade 12 Transferred", "Grade 12 GED", "Grade 12 Expelled"
-    ];
-
-    function getNonZeroColumns(columns) {
-      const colSums = {};
-      columns.forEach(col => {
-        colSums[col] = sumField(col);
-      });
-      return Object.entries(colSums)
-        .filter(([_, value]) => value > 0)
-        .reduce((acc, [k, v]) => {
-          acc.labels.push(k.replace(/^K-11 |^Grade 12 /, ''));
-          acc.values.push(v);
-          return acc;
-        }, { labels: [], values: [] });
+    if (supportYears.length > 0) {
+      Plotly.newPlot('stackedSupport', [
+        {
+          name: 'Case Managed',
+          x: supportYears.map(y => y.replace(/[_-]/g, '-')),
+          y: supportYears.map(y => supportStacked[y].cm),
+          type: 'bar',
+          marker: { color: '#0057B8' }
+        },
+        {
+          name: 'WS Only',
+          x: supportYears.map(y => y.replace(/[_-]/g, '-')),
+          y: supportYears.map(y => supportStacked[y].ws),
+          type: 'bar',
+          marker: { color: '#FFC72C' }
+        }
+      ], { 
+        barmode: 'stack',
+        title: {
+          text: 'Support Types by Year',
+          font: { size: 16, color: '#0057B8' }
+        },
+        margin: { t: 50, b: 60, l: 50, r: 30 },
+        height: 300,
+        xaxis: { title: 'Year' },
+        yaxis: { title: 'Number of Students' }
+      }, {responsive: true});
     }
 
-    const k11Data = getNonZeroColumns(k11Cols);
-    const g12Data = getNonZeroColumns(g12Cols);
+    // Student outcomes by goal categories
+    const goalCategories = ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness'];
+    const outcomeData = goalCategories.map(category => {
+      const goalCol = `${category}: CM students w/ goal`;
+      const metCol = `${category}: CM students met goal`;
+      
+      const studentsWithGoals = filtered.filter(row => parseInt(row[goalCol]) > 0).length;
+      const studentsMetGoals = filtered.filter(row => parseInt(row[metCol]) > 0).length;
+      
+      return {
+        category: category,
+        withGoals: studentsWithGoals,
+        metGoals: studentsMetGoals,
+        successRate: studentsWithGoals > 0 ? (studentsMetGoals / studentsWithGoals * 100) : 0
+      };
+    }).filter(d => d.withGoals > 0);
 
-    const traces = [];
-
-    if (k11Data.labels.length > 0) {
-      traces.push({
-        name: 'K-11',
-        x: k11Data.values,
-        y: k11Data.labels,
+    if (outcomeData.length > 0) {
+      Plotly.newPlot('outcomeChart', [{
+        x: outcomeData.map(d => d.category),
+        y: outcomeData.map(d => d.successRate),
         type: 'bar',
-        orientation: 'h'
-      });
+        marker: { color: '#E31B23' },
+        text: outcomeData.map(d => `${d.successRate.toFixed(1)}%`),
+        textposition: 'auto'
+      }], {
+        title: {
+          text: 'Goal Success Rates by Category',
+          font: { size: 16, color: '#0057B8' }
+        },
+        margin: { t: 50, b: 100, l: 50, r: 30 },
+        height: 300,
+        xaxis: { 
+          title: 'Goal Category',
+          tickangle: -45
+        },
+        yaxis: { 
+          title: 'Success Rate (%)',
+          range: [0, 100]
+        }
+      }, {responsive: true});
+    } else {
+      document.getElementById('outcomeChart').innerHTML = 
+        '<div style="text-align: center; padding: 20px; color: #6c757d;">No outcome data available</div>';
     }
-
-    if (g12Data.labels.length > 0) {
-      traces.push({
-        name: 'Grade 12',
-        x: g12Data.values,
-        y: g12Data.labels,
-        type: 'bar',
-        orientation: 'h'
-      });
-    }
-
-    Plotly.newPlot('outcomeChart', traces, {
-      barmode: 'group',
-      margin: { l: 100 },
-      height: 400
-    });
   }
 
   // Load data when the page loads

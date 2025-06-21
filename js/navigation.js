@@ -17,24 +17,45 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('.site-header').appendChild(navToggle);
   };
 
-  // Handle dropdown menus for keyboard accessibility
+  // Handle dropdown menus for both click and keyboard accessibility
   const setupAccessibleDropdowns = () => {
     const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
     
     dropdownToggles.forEach(toggle => {
+      // Handle click events
+      toggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        const dropdown = this.nextElementSibling;
+        const isExpanded = dropdown.classList.contains('show');
+        
+        // Close all other dropdowns
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+          menu.classList.remove('show');
+        });
+        
+        // Toggle current dropdown
+        if (!isExpanded) {
+          dropdown.classList.add('show');
+        }
+        this.setAttribute('aria-expanded', !isExpanded);
+      });
+      
+      // Handle keyboard events for accessibility
       toggle.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           const dropdown = this.nextElementSibling;
-          const isExpanded = dropdown.style.display === 'block';
+          const isExpanded = dropdown.classList.contains('show');
           
           // Close all other dropdowns
           document.querySelectorAll('.dropdown-menu').forEach(menu => {
-            menu.style.display = 'none';
+            menu.classList.remove('show');
           });
           
           // Toggle current dropdown
-          dropdown.style.display = isExpanded ? 'none' : 'block';
+          if (!isExpanded) {
+            dropdown.classList.add('show');
+          }
           this.setAttribute('aria-expanded', !isExpanded);
         }
       });
@@ -44,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
       if (!e.target.closest('.dropdown')) {
         document.querySelectorAll('.dropdown-menu').forEach(menu => {
-          menu.style.display = 'none';
+          menu.classList.remove('show');
         });
         
         document.querySelectorAll('.dropdown-toggle').forEach(toggle => {

@@ -171,35 +171,61 @@
   }
 
   function initializeDashboard(data) {
+    console.log("Initializing dashboard with", data.length, "records");
+    
     // Populate dropdowns
     populateDropdowns(data);
 
-    // Compute key metrics
-    const uniqueSchools = new Set(data.map(row => row["School Name"])).size;
-    const uniqueCities = new Set(data.map(row => row["Site City"])).size;
-    const uniqueDistricts = new Set(data.map(row => row["School District"])).size;
+    // Compute key metrics with better error handling
+    const validSchools = data.filter(row => row["School Name"] && row["School Name"].trim() !== "");
+    const uniqueSchools = new Set(validSchools.map(row => row["School Name"])).size;
+    
+    const validCities = data.filter(row => row["Site City"] && row["Site City"].trim() !== "");
+    const uniqueCities = new Set(validCities.map(row => row["Site City"])).size;
+    
+    const validDistricts = data.filter(row => row["School District"] && row["School District"].trim() !== "");
+    const uniqueDistricts = new Set(validDistricts.map(row => row["School District"])).size;
 
-    const gradRates = data.map(row => parseFloat(row["Annual Graduation Rate (Prior Year)"]))
-                          .filter(rate => !isNaN(rate));
-    const avgGradRate = (gradRates.reduce((a, b) => a + b, 0) / gradRates.length).toFixed(1);
+    const gradRates = data.map(row => {
+      const rate = parseFloat(row["Annual Graduation Rate (Prior Year)"]) || 
+                  parseFloat(row["Graduation Rate"]) || 
+                  parseFloat(row["4-year Graduation Rate"]);
+      return rate;
+    }).filter(rate => !isNaN(rate) && rate > 0 && rate <= 100);
+    
+    const avgGradRate = gradRates.length > 0 
+      ? (gradRates.reduce((a, b) => a + b, 0) / gradRates.length).toFixed(1)
+      : "N/A";
 
     document.getElementById("totalSchools").innerText = uniqueSchools;
     document.getElementById("totalCities").innerText = uniqueCities;
     document.getElementById("totalDistricts").innerText = uniqueDistricts;
-    document.getElementById("avgGradRate").innerText = avgGradRate + "%";
+    document.getElementById("avgGradRate").innerText = avgGradRate !== "N/A" ? avgGradRate + "%" : avgGradRate;
 
-    // Charts
-    renderCityChart(data);
-    renderSiteTypeChart(data);
-    renderGradePresenceChart(data);
+    // Charts with improved error handling
+    try {
+      renderCityChart(data);
+      renderSiteTypeChart(data);
+      renderGradePresenceChart(data);
+    } catch (error) {
+      console.error("Error rendering charts:", error);
+    }
   }
 
   function populateDropdowns(data) {
     const schoolDropdown = document.getElementById("schoolDropdown");
     const yearDropdown = document.getElementById("yearDropdown");
 
-    const schoolSet = new Set(data.map(d => d["School Name"]));
-    const yearSet = new Set(data.map(d => d["Reporting Year"]));
+    // Clear existing options except first one
+    while (schoolDropdown.children.length > 1) {
+      schoolDropdown.removeChild(schoolDropdown.lastChild);
+    }
+    while (yearDropdown.children.length > 1) {
+      yearDropdown.removeChild(yearDropdown.lastChild);
+    }
+
+    const schoolSet = new Set(data.map(d => d["School Name"]).filter(Boolean));
+    const yearSet = new Set(data.map(d => d["Reporting Year"]).filter(Boolean));
 
     schoolSet.forEach(school => {
       const option = document.createElement("option");
@@ -208,7 +234,7 @@
       schoolDropdown.appendChild(option);
     });
 
-    Array.from(yearSet).sort().forEach(year => {
+    Array.from(yearSet).sort().reverse().forEach(year => {
       const option = document.createElement("option");
       option.value = year;
       option.textContent = year;
@@ -220,8 +246,16 @@
     const counts = {};
     data.forEach(row => {
       const city = row["Site City"];
-      if (city) counts[city] = (counts[city] || 0) + 1;
+      if (city && city.trim() !== "") {
+        counts[city] = (counts[city] || 0) + 1;
+      }
     });
+
+    if (Object.keys(counts).length === 0) {
+      document.getElementById("schoolsByCityChart").parentElement.innerHTML = 
+        '<h5>Schools by City</h5><p>No city data available</p>';
+      return;
+    }
 
     const ctx = document.getElementById("schoolsByCityChart").getContext("2d");
     new Chart(ctx, {
@@ -235,6 +269,22 @@
           borderColor: "#0057B8",
           borderWidth: 1
         }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        }
       }
     });
   }
@@ -243,8 +293,16 @@
     const counts = {};
     data.forEach(row => {
       const type = row["Site Type"] || "Unknown";
-      counts[type] = (counts[type] || 0) + 1;
+      if (type.trim() !== "") {
+        counts[type] = (counts[type] || 0) + 1;
+      }
     });
+
+    if (Object.keys(counts).length === 0) {
+      document.getElementById("siteTypeChart").parentElement.innerHTML = 
+        '<h5>Site Type Distribution</h5><p>No site type data available</p>';
+      return;
+    }
 
     const ctx = document.getElementById("siteTypeChart").getContext("2d");
     new Chart(ctx, {
@@ -257,22 +315,51 @@
           borderColor: "#fff",
           borderWidth: 2
         }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
       }
     });
   }
 
   function renderGradePresenceChart(data) {
-    const gradeKeys = [
-      "Grade Present: Pre-K",
-      "Grade(s) Present: K-5",
-      "Grade(s) Present: 6-8",
-      "Grade(s) Present: 9-11",
-      "Grade Present: 12"
+    // Try multiple possible column name variations
+    const gradeKeyVariations = [
+      ["Grade Present: Pre-K", "Grade(s) Present: Pre-K", "Pre-K"],
+      ["Grade(s) Present: K-5", "Grade Present: K-5", "K-5"],
+      ["Grade(s) Present: 6-8", "Grade Present: 6-8", "6-8"],
+      ["Grade(s) Present: 9-11", "Grade Present: 9-11", "9-11"],
+      ["Grade Present: 12", "Grade(s) Present: 12", "12"]
     ];
 
-    const counts = gradeKeys.map(key => {
-      return data.filter(row => row[key]?.toLowerCase() === "yes" || row[key] === "1").length;
+    const counts = gradeKeyVariations.map(variations => {
+      // Try each variation until we find one that exists
+      for (const key of variations) {
+        const count = data.filter(row => {
+          const value = row[key];
+          return value && (value.toString().toLowerCase() === "yes" || 
+                          value.toString().toLowerCase() === "true" || 
+                          value === "1" || 
+                          value === 1);
+        }).length;
+        
+        if (count > 0) return count;
+      }
+      return 0;
     });
+
+    const hasData = counts.some(count => count > 0);
+    
+    if (!hasData) {
+      document.getElementById("gradePresenceChart").parentElement.innerHTML = 
+        '<h5>Grade Levels Present</h5><p>No grade level data available</p>';
+      return;
+    }
 
     const ctx = document.getElementById("gradePresenceChart").getContext("2d");
     new Chart(ctx, {
@@ -286,6 +373,22 @@
           borderColor: "#0057B8",
           borderWidth: 1
         }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        }
       }
     });
   }

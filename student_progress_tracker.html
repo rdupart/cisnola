@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Student Progress Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Progress Tracker - CISEPA Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
   <style>
@@ -89,63 +91,137 @@
   </style>
 </head>
 <body>
-  <div class="controls">
-    <div>
-      <label for="yearSelect">Select Year:</label>
-      <select id="yearSelect" onchange="loadData()">
-        <option value="2023_2024" selected>2023-2024</option>
-        <option value="2022_2023">2022-2023</option>
-        <option value="2021_2022">2021-2022</option>
-        <option value="2020_2021">2020-2021</option>
-        <option value="2019_2020">2019-2020</option>
-        <option value="2018_2019">2018-2019</option>
-        <option value="2017_2018">2017-2018</option>
-      </select>
+  <!-- Header Section -->
+  <header class="site-header">
+    <div class="logo-container">
+      <div class="site-logo"></div>
+      <h1 class="site-title">CISEPA Dashboard</h1>
     </div>
+    <div class="search-container">
+      <input type="text" placeholder="Search this site" class="search-bar">
+    </div>
+    <div class="accessibility-links">
+      <a href="#main-content" class="skip-link">Skip to main content</a>
+      <a href="#navigation" class="skip-link">Skip to navigation</a>
+    </div>
+  </header>
 
-    <div>
-      <label for="schoolSelect">Select School:</label>
-      <select id="schoolSelect" onchange="updateVisualizations()">
-        <option value="all">All Schools</option>
-        <!-- Dynamic options will be populated here -->
-      </select>
-    </div>
+  <!-- Navigation Bar -->
+  <nav id="navigation" class="main-nav">
+    <ul class="nav-list">
+      <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+      <li class="nav-item dropdown">
+        <a href="#" class="nav-link dropdown-toggle">Current Dashboards</a>
+        <ul class="dropdown-menu">
+          <li><a href="dashboards/support-profiles.html">Support Profiles</a></li>
+          <li><a href="dashboards/referral-reasons.html">Referral Reasons</a></li>
+        </ul>
+      </li>
+      <li class="nav-item dropdown">
+        <a href="#" class="nav-link dropdown-toggle">Annual Outcomes</a>
+        <ul class="dropdown-menu">
+          <li><a href="annual/students-served.html">Students Served</a></li>
+          <li><a href="school_goals.html">Schoolwide Goals</a></li>
+          <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
+          <li><a href="goals.html">Student Goals</a></li>
+          <li><a href="demographics.html">Demographics</a></li>
+          <li><a href="attributes.html">Student Attributes</a></li>
+          <li><a href="student_progress_tracker.html" class="active">Student Progress</a></li>
+        </ul>
+      </li>
+      <li class="nav-item dropdown">
+        <a href="#" class="nav-link dropdown-toggle">More...</a>
+        <ul class="dropdown-menu">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="#current-dashboards">Current Dashboards</a></li>
+          <li><a href="#annual-outcomes">Annual Outcomes</a></li>
+          <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
+          <li><a href="tier_activities.html">Tier Activities</a></li>
+          <li><a href="tier_activities.html">Tier II</a></li>
+          <li><a href="tier_support_activites.html">Tier III</a></li>
+          <li><a href="student_progress_tracker.html" class="active">Student Progress Tracker</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
 
-    <div>
-      <label for="metricSelect">Focus Area:</label>
-      <select id="metricSelect" onchange="updateVisualizations()">
-        <option value="attendance">Attendance</option>
-        <option value="behavior">Behavior</option>
-        <option value="academics">Academics</option>
-        <option value="sel">Social-Emotional Learning</option>
-      </select>
-    </div>
-  </div>
+  <!-- Main Content -->
+  <main id="main-content">
+    <section class="content-section">
+      <h1 class="section-title">Student Progress Tracker</h1>
+      
+      <div class="controls">
+        <div>
+          <label for="yearSelect">Select Year:</label>
+          <select id="yearSelect" onchange="loadData()">
+            <option value="2023_2024" selected>2023-2024</option>
+            <option value="2022_2023">2022-2023</option>
+            <option value="2021_2022">2021-2022</option>
+            <option value="2020_2021">2020-2021</option>
+            <option value="2019_2020">2019-2020</option>
+            <option value="2018_2019">2018-2019</option>
+            <option value="2017_2018">2017-2018</option>
+          </select>
+        </div>
+        <div>
+          <label for="schoolSelect">Select School:</label>
+          <select id="schoolSelect" onchange="updateVisualizations()">
+            <option value="all">All Schools</option>
+            <!-- Dynamic options will be populated here -->
+          </select>
+        </div>
+        <div>
+          <label for="metricSelect">Focus Area:</label>
+          <select id="metricSelect" onchange="updateVisualizations()">
+            <option value="attendance">Attendance</option>
+            <option value="behavior">Behavior</option>
+            <option value="academics">Academics</option>
+            <option value="sel">Social-Emotional Learning</option>
+          </select>
+        </div>
+      </div>
 
-  <!-- Key Metrics Row -->
-  <div class="metric-row">
-    <div class="metric-card">
-      <div class="metric-title">Students with Goals</div>
-      <div class="metric-value" id="students-with-goals">-</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-title">Goals Met</div>
-      <div class="metric-value" id="goals-met">-</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-title">Success Rate</div>
-      <div class="metric-value" id="success-rate">-</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-title">Progress Rate</div>
-      <div class="metric-value" id="progress-rate">-</div>
-    </div>
-  </div>
+      <!-- Key Metrics Row -->
+      <div class="metric-row">
+        <div class="metric-card">
+          <div class="metric-title">Students with Goals</div>
+          <div class="metric-value" id="students-with-goals">-</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Goals Met</div>
+          <div class="metric-value" id="goals-met">-</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Success Rate</div>
+          <div class="metric-value" id="success-rate">-</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Progress Rate</div>
+          <div class="metric-value" id="progress-rate">-</div>
+        </div>
+      </div>
 
-  <!-- Charts -->
-  <div id="progress-chart" class="chart-container"></div>
-  <div id="year-comparison-chart" class="chart-container"></div>
-  <div id="goal-distribution-chart" class="chart-container"></div>
+      <!-- Charts -->
+      <div id="progress-chart" class="chart-container"></div>
+      <div id="year-comparison-chart" class="chart-container"></div>
+      <div id="goal-distribution-chart" class="chart-container"></div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <p class="attribution">Data and visualizations prepared by Jon Irons, Manager of Data and Evaluation. Contact with questions or to request additional data <a href="mailto:ironsj@ciseasternpa.org">ironsj@ciseasternpa.org</a> Call/Text: 484-891-1760</p>
+      <div class="utility-links">
+        <a href="#" class="utility-link">Report abuse</a>
+        <a href="#" class="utility-link">Page details</a>
+        <span class="page-updated">Page updated: May 31, 2025</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript -->
+  <script src="js/navigation.js"></script>
 
   <script>
     const csvUrls = {
@@ -246,11 +322,18 @@
       const notMetWithProgressColumn = `${metricName}: CM students not met, with progress`;
       const notMetNoProgressColumn = `${metricName}: CM students not met, no progress`;
       
-      // Calculate metrics
-      const studentsWithGoals = filteredData.filter(item => item[goalColumn]).length;
-      const studentsMetGoal = filteredData.filter(item => item[metGoalColumn]).length;
-      const studentsWithProgress = filteredData.filter(item => item[notMetWithProgressColumn]).length;
-      const studentsNoProgress = filteredData.filter(item => item[notMetNoProgressColumn]).length;
+      // Calculate metrics by summing values across all rows
+      let studentsWithGoals = 0;
+      let studentsMetGoal = 0;
+      let studentsWithProgress = 0;
+      let studentsNoProgress = 0;
+      
+      filteredData.forEach(row => {
+        studentsWithGoals += parseInt(row[goalColumn]) || 0;
+        studentsMetGoal += parseInt(row[metGoalColumn]) || 0;
+        studentsWithProgress += parseInt(row[notMetWithProgressColumn]) || 0;
+        studentsNoProgress += parseInt(row[notMetNoProgressColumn]) || 0;
+      });
       
       // Update metric cards
       document.getElementById('students-with-goals').textContent = studentsWithGoals;
@@ -266,37 +349,46 @@
         : 0;
       document.getElementById('progress-rate').textContent = `${progressRate}%`;
       
-      // Create progress distribution chart
+      // Create progress distribution chart with better formatting
       const progressData = [
         { name: 'Met Goal', value: studentsMetGoal },
         { name: 'Progress, Not Met', value: studentsWithProgress },
         { name: 'No Progress', value: studentsNoProgress }
       ];
       
-      Plotly.newPlot('progress-chart', [{
-        labels: progressData.map(d => d.name),
-        values: progressData.map(d => d.value),
-        type: 'pie',
-        hole: 0.4,
-        marker: {
-          colors: ['#0057B8', '#FFC72C', '#E31B23']
-        },
-        textinfo: 'label+percent',
-        texttemplate: '%{label}: %{percent}'
-      }], {
-        title: {
-          text: `${metricName} Goal Progress Distribution`,
-          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
-        },
-        paper_bgcolor: '#fff',
-        plot_bgcolor: '#fff',
-        margin: { t: 50, b: 30, l: 30, r: 30 },
-        showlegend: true,
-        legend: {
-          orientation: 'h',
-          y: -0.2
-        }
-      });
+      // Only show chart if there's data
+      if (studentsWithGoals > 0) {
+        Plotly.newPlot('progress-chart', [{
+          labels: progressData.map(d => d.name),
+          values: progressData.map(d => d.value),
+          type: 'pie',
+          hole: 0.4,
+          marker: {
+            colors: ['#0057B8', '#FFC72C', '#E31B23']
+          },
+          textinfo: 'label+percent+value',
+          texttemplate: '%{label}<br>%{value} students<br>%{percent}'
+        }], {
+          title: {
+            text: `${metricName} Goal Progress Distribution`,
+            font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+          },
+          paper_bgcolor: '#fff',
+          plot_bgcolor: '#fff',
+          margin: { t: 60, b: 60, l: 30, r: 30 },
+          showlegend: true,
+          legend: {
+            orientation: 'h',
+            y: -0.2,
+            x: 0.5,
+            xanchor: 'center'
+          },
+          height: 400
+        }, {responsive: true});
+      } else {
+        document.getElementById('progress-chart').innerHTML = 
+          '<div style="text-align: center; padding: 50px; color: #777;">No data available for the selected metric and school</div>';
+      }
       
       // Create year-over-year comparison if previous year data is available
       if (previousYearData.length > 0) {
@@ -304,8 +396,14 @@
           ? previousYearData 
           : previousYearData.filter(item => item['School Name'] === selectedSchool);
         
-        const prevStudentsWithGoals = prevFilteredData.filter(item => item[goalColumn]).length;
-        const prevStudentsMetGoal = prevFilteredData.filter(item => item[metGoalColumn]).length;
+        let prevStudentsWithGoals = 0;
+        let prevStudentsMetGoal = 0;
+        
+        prevFilteredData.forEach(row => {
+          prevStudentsWithGoals += parseInt(row[goalColumn]) || 0;
+          prevStudentsMetGoal += parseInt(row[metGoalColumn]) || 0;
+        });
+        
         const prevSuccessRate = prevStudentsWithGoals > 0 
           ? Math.round((prevStudentsMetGoal / prevStudentsWithGoals) * 100) 
           : 0;
@@ -341,19 +439,20 @@
           paper_bgcolor: '#fff',
           plot_bgcolor: '#fff',
           barmode: 'group',
-          margin: { t: 50, b: 50, l: 50, r: 30 }
-        });
+          margin: { t: 60, b: 80, l: 50, r: 30 },
+          height: 400
+        }, {responsive: true});
       } else {
         // If no previous year data, show a message
         document.getElementById('year-comparison-chart').innerHTML = 
           '<div style="text-align: center; padding: 50px; color: #777;">No previous year data available for comparison</div>';
       }
       
-      // Create goal distribution across all metrics
+      // Create goal distribution across all metrics with better spacing
       const metrics = ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness'];
       const goalCounts = metrics.map(metric => {
         const col = `${metric}: CM students w/ goal`;
-        return filteredData.filter(item => item[col]).length;
+        return filteredData.reduce((sum, row) => sum + (parseInt(row[col]) || 0), 0);
       });
       
       Plotly.newPlot('goal-distribution-chart', [{
@@ -362,7 +461,9 @@
         type: 'bar',
         marker: {
           color: '#00A9E0'
-        }
+        },
+        text: goalCounts,
+        textposition: 'auto'
       }], {
         title: {
           text: 'Goal Distribution Across Categories',
@@ -370,11 +471,16 @@
         },
         paper_bgcolor: '#fff',
         plot_bgcolor: '#fff',
-        margin: { t: 50, b: 80, l: 50, r: 30 },
+        margin: { t: 60, b: 120, l: 60, r: 30 },
+        height: 400,
         xaxis: {
-          tickangle: -45
+          tickangle: -45,
+          tickfont: { size: 12 }
+        },
+        yaxis: {
+          title: 'Number of Students with Goals'
         }
-      });
+      }, {responsive: true});
     }
 
     // Initialize the dashboard
