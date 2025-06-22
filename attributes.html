@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Attributes - CISEPA Dashboard</title>
   <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
   <style>
     .table-container {
@@ -37,6 +38,22 @@
     tr:hover {
       background-color: #f5f5f5;
     }
+    .chart-container {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0, 87, 184, 0.07);
+      padding: 30px;
+      margin: 30px auto;
+      max-width: 1400px;
+      border-top: 3px solid #0057B8;
+      min-height: 500px;
+    }
+    .chart-container h2 {
+      color: #0057B8;
+      text-align: center;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
@@ -62,33 +79,23 @@
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">Current Dashboards</a>
         <ul class="dropdown-menu">
-          <li><a href="dashboards/support-profiles.html">Support Profiles</a></li>
-          <li><a href="dashboards/referral-reasons.html">Referral Reasons</a></li>
+          <li><a href="index.html#student-services-overview">Student Services Overview</a></li>
+          <li><a href="tier_activities.html">Tier Support Activities</a></li>
         </ul>
       </li>
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">Annual Outcomes</a>
         <ul class="dropdown-menu">
-          <li><a href="annual/students-served.html">Students Served</a></li>
-          <li><a href="school_goals.html">Schoolwide Goals</a></li>
-          <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
-          <li><a href="goals.html">Student Goals</a></li>
+          <li><a href="student_engagement.html">Students Served</a></li>
+          <li><a href="student_progress_tracker.html">Student Progress</a></li>
           <li><a href="demographics.html">Demographics</a></li>
           <li><a href="attributes.html" class="active">Student Attributes</a></li>
-          <li><a href="student_progress_tracker.html">Student Progress</a></li>
         </ul>
       </li>
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">More...</a>
         <ul class="dropdown-menu">
-          <li><a href="index.html">Home</a></li>
-          <li><a href="#current-dashboards">Current Dashboards</a></li>
-          <li><a href="#annual-outcomes">Annual Outcomes</a></li>
-          <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
-          <li><a href="tier_activities.html">Tier Activities</a></li>
-          <li><a href="tier_activities.html">Tier II</a></li>
-          <li><a href="tier_support_activites.html">Tier III</a></li>
-          <li><a href="student_progress_tracker.html">Student Progress Tracker</a></li>
+          <li><a href="school.html">School Dashboard</a></li>
         </ul>
       </li>
     </ul>

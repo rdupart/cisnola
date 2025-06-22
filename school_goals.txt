@@ -76,14 +76,14 @@
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">Current Dashboards</a>
         <ul class="dropdown-menu">
-          <li><a href="dashboards/support-profiles.html">Support Profiles</a></li>
-          <li><a href="dashboards/referral-reasons.html">Referral Reasons</a></li>
+          <li><a href="student_support_dashboards.html">Support Profiles</a></li>
+          <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
         </ul>
       </li>
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">Annual Outcomes</a>
         <ul class="dropdown-menu">
-          <li><a href="annual/students-served.html">Students Served</a></li>
+          <li><a href="student_engagement.html">Students Served</a></li>
           <li><a href="school_goals.html" class="active">Schoolwide Goals</a></li>
           <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
           <li><a href="goals.html">Student Goals</a></li>
@@ -331,10 +331,17 @@
         "% of senior cohort enrolled in postsecondary education - Have goal?"
       ];
 
+      console.log(`Processing ${data.length} school records for goal analysis`);
+
       data.forEach(row => {
         goalColumns.forEach(col => {
-          if (row[col] && row[col].toLowerCase().trim() === "yes") {
+          const goalValue = row[col];
+          console.log(`Checking ${row["School Name"]} - ${col}: "${goalValue}"`);
+          
+          if (goalValue && goalValue.toLowerCase().trim() === "yes") {
             totalGoalsSet++;
+            console.log(`Found goal set: ${row["School Name"]} - ${col}`);
+            
             const achievedCol = col.replace("Have goal?", "Goal Achievement").trim();
             const achievementValue = row[achievedCol];
             
@@ -347,12 +354,18 @@
                 // Count as achieved if value > 50% or contains "Goal Met"
                 if (numValue > 50 || achievementValue.toLowerCase().includes("goal met")) {
                   goalsAchieved++;
+                  console.log(`Goal achieved: ${row["School Name"]} - ${col} = ${achievementValue}`);
                 }
+              } else if (achievementValue.toLowerCase().includes("goal met")) {
+                goalsAchieved++;
+                console.log(`Goal marked as met: ${row["School Name"]} - ${col} = ${achievementValue}`);
               }
             }
           }
         });
       });
+
+      console.log(`Summary: ${totalGoalsSet} goals set, ${goalsAchieved} achieved, ${goalsWithData} with data`);
 
       const successPercentage = totalGoalsSet > 0 ? ((goalsAchieved / totalGoalsSet) * 100).toFixed(1) : 0;
       const avgAchievement = goalsWithData > 0 ? (totalAchievementSum / goalsWithData).toFixed(1) : 0;
@@ -361,6 +374,14 @@
       document.getElementById("totalGoalsSet").textContent = totalGoalsSet;
       document.getElementById("goalsAchieved").textContent = goalsAchieved;
       document.getElementById("overallSuccess").textContent = `${successPercentage}%`;
+
+      // Show no-data message if no goals found
+      if (totalGoalsSet === 0) {
+        document.getElementById('goalAccordion').innerHTML = 
+          '<div class="alert alert-info"><h4>No School Goals Data Available</h4>' +
+          '<p>Based on the current data, schools have not set formal goals in the tracked categories, or the goal data is not available in the current dataset.</p>' +
+          '<p>This could indicate that goal setting occurs through different processes or is tracked in other systems.</p></div>';
+      }
 
       // Add average achievement display
       const summaryCards = document.querySelector('.row.mb-4');
@@ -383,6 +404,12 @@
 
     function renderAllGoals(data) {
     const container = document.getElementById("goalAccordion");
+    
+    // Don't render charts if summary already showed no goals
+    if (container.innerHTML.includes('No School Goals Data Available')) {
+      return;
+    }
+    
     container.innerHTML = ""; // Clear previous
 
     container.appendChild(renderGoalCategory("Academic Goals", data, [

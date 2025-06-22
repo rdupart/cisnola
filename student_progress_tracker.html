@@ -5,15 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Progress Tracker - CISEPA Dashboard</title>
   <link rel="stylesheet" href="css/styles.css">
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
       background: #f5f7fa;
       margin: 0;
-      padding: 10px;
+      padding: 20px;
       color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-top: 32px;
+      font-size: 2.5rem;
+      color: #0057B8;
+      letter-spacing: 1px;
+    }
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin: 24px 0 32px 0;
+      flex-wrap: wrap;
+      padding: 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 87, 184, 0.05);
+      max-width: 1400px;
+      margin-left: auto;
+      margin-right: auto;
     }
     label {
       font-weight: 600;
@@ -21,48 +42,67 @@
       color: #0057B8;
     }
     select {
-      padding: 6px 12px;
+      padding: 8px 12px;
       border-radius: 6px;
       border: 1px solid #b0b8c1;
       background: #fff;
       font-size: 1rem;
       transition: border 0.2s;
-      margin-right: 15px;
     }
     select:focus {
       border: 1.5px solid #0057B8;
       outline: none;
     }
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
-      align-items: center;
-    }
     .chart-container {
       background: #fff;
       border-radius: 14px;
       box-shadow: 0 2px 16px rgba(0, 87, 184, 0.07);
-      padding: 18px;
-      margin-bottom: 20px;
+      padding: 30px;
+      margin: 30px auto;
       border-top: 3px solid #0057B8;
+      max-width: 1600px;
+      min-height: 500px;
     }
     .chart-container:hover {
+      box-shadow: 0 6px 24px rgba(0, 87, 184, 0.17);
+    }
+    .charts-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 32px;
+      max-width: 1600px;
+      margin: 0 auto 40px auto;
+      padding: 0 20px;
+    }
+    .chart-box {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0, 87, 184, 0.07);
+      padding: 24px;
+      transition: box-shadow 0.2s;
+      margin-bottom: 6px;
+      border-top: 3px solid #0057B8;
+      min-height: 450px;
+    }
+    .chart-box:hover {
       box-shadow: 0 6px 24px rgba(0, 87, 184, 0.17);
     }
     .metric-row {
       display: flex;
       flex-wrap: wrap;
       gap: 15px;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
+      max-width: 1600px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 0 20px;
     }
     .metric-card {
       flex: 1;
       min-width: 180px;
       background: #fff;
       border-radius: 14px;
-      padding: 15px;
+      padding: 20px;
       text-align: center;
       box-shadow: 0 2px 16px rgba(0, 87, 184, 0.07);
       border-top: 3px solid #0057B8;
@@ -70,10 +110,10 @@
     .metric-title {
       font-size: 14px;
       color: #555;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .metric-value {
-      font-size: 24px;
+      font-size: 28px;
       font-weight: bold;
       color: #0057B8;
     }
@@ -87,6 +127,10 @@
     }
     .negative {
       color: #E31B23;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.55rem; }
+      .charts-container { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -113,33 +157,23 @@
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">Current Dashboards</a>
         <ul class="dropdown-menu">
-          <li><a href="dashboards/support-profiles.html">Support Profiles</a></li>
-          <li><a href="dashboards/referral-reasons.html">Referral Reasons</a></li>
+          <li><a href="index.html#student-services-overview">Student Services Overview</a></li>
+          <li><a href="tier_activities.html">Tier Support Activities</a></li>
         </ul>
       </li>
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">Annual Outcomes</a>
         <ul class="dropdown-menu">
-          <li><a href="annual/students-served.html">Students Served</a></li>
-          <li><a href="school_goals.html">Schoolwide Goals</a></li>
-          <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
-          <li><a href="goals.html">Student Goals</a></li>
+          <li><a href="student_engagement.html">Students Served</a></li>
+          <li><a href="student_progress_tracker.html" class="active">Student Progress</a></li>
           <li><a href="demographics.html">Demographics</a></li>
           <li><a href="attributes.html">Student Attributes</a></li>
-          <li><a href="student_progress_tracker.html" class="active">Student Progress</a></li>
         </ul>
       </li>
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">More...</a>
         <ul class="dropdown-menu">
-          <li><a href="index.html">Home</a></li>
-          <li><a href="#current-dashboards">Current Dashboards</a></li>
-          <li><a href="#annual-outcomes">Annual Outcomes</a></li>
-          <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
-          <li><a href="tier_activities.html">Tier Activities</a></li>
-          <li><a href="tier_activities.html">Tier II</a></li>
-          <li><a href="tier_support_activites.html">Tier III</a></li>
-          <li><a href="student_progress_tracker.html" class="active">Student Progress Tracker</a></li>
+          <li><a href="school.html">School Dashboard</a></li>
         </ul>
       </li>
     </ul>
@@ -167,16 +201,28 @@
           <label for="schoolSelect">Select School:</label>
           <select id="schoolSelect" onchange="updateVisualizations()">
             <option value="all">All Schools</option>
-            <!-- Dynamic options will be populated here -->
+          </select>
+        </div>
+        <div>
+          <label for="goalSelect">Select Goal:</label>
+          <select id="goalSelect" onchange="updateVisualizations()">
+            <option value="all">All Goals</option>
+            <option value="Attendance">Attendance</option>
+            <option value="Behavior">Behavior</option>
+            <option value="Academics">Academics</option>
+            <option value="SEL">SEL</option>
+            <option value="High Risk Behavior">High Risk Behavior</option>
+            <option value="College Readiness">College Readiness</option>
+            <option value="Career Readiness">Career Readiness</option>
           </select>
         </div>
         <div>
           <label for="metricSelect">Focus Area:</label>
           <select id="metricSelect" onchange="updateVisualizations()">
-            <option value="attendance">Attendance</option>
-            <option value="behavior">Behavior</option>
-            <option value="academics">Academics</option>
-            <option value="sel">Social-Emotional Learning</option>
+            <option value="goals">Goal Setting</option>
+            <option value="progress">Progress Tracking</option>
+            <option value="outcomes">Outcomes</option>
+            <option value="comparison">Year Comparison</option>
           </select>
         </div>
       </div>
@@ -199,12 +245,27 @@
           <div class="metric-title">Progress Rate</div>
           <div class="metric-value" id="progress-rate">-</div>
         </div>
+        <div class="metric-card">
+          <div class="metric-title">Students Making Progress</div>
+          <div class="metric-value" id="students-progressing">-</div>
+        </div>
       </div>
 
       <!-- Charts -->
-      <div id="progress-chart" class="chart-container"></div>
-      <div id="year-comparison-chart" class="chart-container"></div>
-      <div id="goal-distribution-chart" class="chart-container"></div>
+      <div class="charts-container">
+        <div class="chart-box" id="progress-container">
+          <div id="goal-progress-chart"></div>
+        </div>
+        <div class="chart-box" id="trends-container">
+          <div id="goal-trends-chart"></div>
+        </div>
+        <div class="chart-box" id="comparative-container">
+          <div id="comparative-chart"></div>
+        </div>
+        <div class="chart-box" id="distribution-container">
+          <div id="goal-distribution-chart"></div>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -236,59 +297,91 @@
 
     let currentData = [];
     let previousYearData = [];
-    const metricMap = {
-      'attendance': 'Attendance',
-      'behavior': 'Behavior',
-      'academics': 'Academics',
-      'sel': 'SEL'
-    };
+    const goalCategories = ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness'];
+
+    // Load data on page initialization
+    document.addEventListener('DOMContentLoaded', function() {
+      loadData();
+    });
 
     function loadData() {
       const selectedYear = document.getElementById('yearSelect').value;
       const csvUrl = csvUrls[selectedYear];
       
-      // Get the previous year for comparison
-      const years = Object.keys(csvUrls);
-      const currentYearIndex = years.indexOf(selectedYear);
-      const previousYear = currentYearIndex < years.length - 1 ? years[currentYearIndex + 1] : null;
+      // Show loading in charts
+      ['goal-progress-chart', 'goal-trends-chart', 'comparative-chart', 'goal-distribution-chart'].forEach(chartId => {
+        document.getElementById(chartId).innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">Loading data...</div>';
+      });
+
+      // Disable controls while loading
+      document.querySelectorAll('select').forEach(select => select.disabled = true);
       
-      // Load current year data
       Papa.parse(csvUrl, {
         download: true,
         header: true,
-        dynamicTyping: true,
         skipEmptyLines: true,
         complete: function(results) {
-          currentData = results.data;
+          if (results.errors.length > 0) {
+            console.error('CSV parsing errors:', results.errors);
+          }
           
-          // Populate school dropdown
+          currentData = results.data;
+          console.log("Loaded", currentData.length, "student records for", selectedYear);
+          
+          // Re-enable controls
+          document.querySelectorAll('select').forEach(select => select.disabled = false);
+          
+          // Populate dropdowns
           populateSchoolDropdown();
           
-          // If there's a previous year, load that data too for comparison
-          if (previousYear) {
-            Papa.parse(csvUrls[previousYear], {
-              download: true,
-              header: true,
-              dynamicTyping: true,
-              skipEmptyLines: true,
-              complete: function(prevResults) {
-                previousYearData = prevResults.data;
-                updateVisualizations();
-              },
-              error: function(err) {
-                console.error("Failed to load previous year data:", err);
-                previousYearData = [];
-                updateVisualizations();
-              }
-            });
-          } else {
-            previousYearData = [];
-            updateVisualizations();
-          }
+          // Load previous year data for comparison
+          loadPreviousYearData();
+          
+          // Update visualizations
+          updateVisualizations();
         },
-        error: function(err) {
-          console.error("Failed to load CSV:", err);
-          alert("Failed to load data for " + selectedYear);
+        error: function(error) {
+          console.error('Error loading CSV:', error);
+          
+          // Re-enable controls
+          document.querySelectorAll('select').forEach(select => select.disabled = false);
+          
+          // Show error message
+          ['goal-progress-chart', 'goal-trends-chart', 'comparative-chart', 'goal-distribution-chart'].forEach(chartId => {
+            document.getElementById(chartId).innerHTML = '<div style="text-align: center; padding: 40px; color: #E31B23;">Error loading data. Please check the file.</div>';
+          });
+        }
+      });
+    }
+
+    function loadPreviousYearData() {
+      const currentYear = document.getElementById('yearSelect').value;
+      const yearMapping = {
+        "2023_2024": "2022_2023",
+        "2022_2023": "2021_2022", 
+        "2021_2022": "2020_2021",
+        "2020_2021": "2019_2020",
+        "2019_2020": "2018_2019",
+        "2018_2019": "2017_2018"
+      };
+      
+      const previousYear = yearMapping[currentYear];
+      if (!previousYear || !csvUrls[previousYear]) {
+        console.log("No previous year data available for comparison");
+        return;
+      }
+
+      Papa.parse(csvUrls[previousYear], {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          previousYearData = results.data;
+          console.log("Loaded", previousYearData.length, "records for previous year comparison");
+          updateVisualizations();
+        },
+        error: function(error) {
+          console.error('Error loading previous year data:', error);
         }
       });
     }
@@ -297,194 +390,292 @@
       const schoolSelect = document.getElementById('schoolSelect');
       schoolSelect.innerHTML = '<option value="all">All Schools</option>';
 
-      const schools = Array.from(new Set(currentData.map(item => item['School Name']))).filter(Boolean);
-      schools.sort().forEach(school => {
-        const option = document.createElement('option');
-        option.value = school;
-        option.textContent = school;
-        schoolSelect.appendChild(option);
+      const schools = [...new Set(currentData.map(d => d['School Name']).filter(Boolean))];
+      
+      schools.forEach(school => {
+        const opt = document.createElement('option');
+        opt.value = school;
+        opt.textContent = school;
+        schoolSelect.appendChild(opt);
       });
+    }
+
+    function getFilteredData() {
+      const selectedSchool = document.getElementById('schoolSelect').value;
+      
+      let filteredData = currentData;
+      if (selectedSchool !== 'all') {
+        filteredData = currentData.filter(d => d['School Name'] === selectedSchool);
+      }
+      
+      return filteredData;
     }
 
     function updateVisualizations() {
-      const selectedSchool = document.getElementById('schoolSelect').value;
-      const selectedMetric = document.getElementById('metricSelect').value;
-      const metricName = metricMap[selectedMetric];
+      const filteredData = getFilteredData();
+      const selectedGoal = document.getElementById('goalSelect').value;
+      const metricFocus = document.getElementById('metricSelect').value;
       
-      // Filter data by selected school
-      const filteredData = selectedSchool === 'all' 
-        ? currentData 
-        : currentData.filter(item => item['School Name'] === selectedSchool);
-      
-      // Get relevant columns for the selected metric
-      const goalColumn = `${metricName}: CM students w/ goal`;
-      const metGoalColumn = `${metricName}: CM students met goal`;
-      const notMetWithProgressColumn = `${metricName}: CM students not met, with progress`;
-      const notMetNoProgressColumn = `${metricName}: CM students not met, no progress`;
-      
-      // Calculate metrics by summing values across all rows
-      let studentsWithGoals = 0;
-      let studentsMetGoal = 0;
-      let studentsWithProgress = 0;
-      let studentsNoProgress = 0;
-      
-      filteredData.forEach(row => {
-        studentsWithGoals += parseInt(row[goalColumn]) || 0;
-        studentsMetGoal += parseInt(row[metGoalColumn]) || 0;
-        studentsWithProgress += parseInt(row[notMetWithProgressColumn]) || 0;
-        studentsNoProgress += parseInt(row[notMetNoProgressColumn]) || 0;
-      });
-      
-      // Update metric cards
-      document.getElementById('students-with-goals').textContent = studentsWithGoals;
-      document.getElementById('goals-met').textContent = studentsMetGoal;
-      
-      const successRate = studentsWithGoals > 0 
-        ? Math.round((studentsMetGoal / studentsWithGoals) * 100) 
-        : 0;
-      document.getElementById('success-rate').textContent = `${successRate}%`;
-      
-      const progressRate = studentsWithGoals > 0 
-        ? Math.round(((studentsMetGoal + studentsWithProgress) / studentsWithGoals) * 100) 
-        : 0;
-      document.getElementById('progress-rate').textContent = `${progressRate}%`;
-      
-      // Create progress distribution chart with better formatting
-      const progressData = [
-        { name: 'Met Goal', value: studentsMetGoal },
-        { name: 'Progress, Not Met', value: studentsWithProgress },
-        { name: 'No Progress', value: studentsNoProgress }
-      ];
-      
-      // Only show chart if there's data
-      if (studentsWithGoals > 0) {
-        Plotly.newPlot('progress-chart', [{
-          labels: progressData.map(d => d.name),
-          values: progressData.map(d => d.value),
-          type: 'pie',
-          hole: 0.4,
-          marker: {
-            colors: ['#0057B8', '#FFC72C', '#E31B23']
-          },
-          textinfo: 'label+percent+value',
-          texttemplate: '%{label}<br>%{value} students<br>%{percent}'
-        }], {
-          title: {
-            text: `${metricName} Goal Progress Distribution`,
-            font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
-          },
-          paper_bgcolor: '#fff',
-          plot_bgcolor: '#fff',
-          margin: { t: 60, b: 60, l: 30, r: 30 },
-          showlegend: true,
-          legend: {
-            orientation: 'h',
-            y: -0.2,
-            x: 0.5,
-            xanchor: 'center'
-          },
-          height: 400
-        }, {responsive: true});
-      } else {
-        document.getElementById('progress-chart').innerHTML = 
-          '<div style="text-align: center; padding: 50px; color: #777;">No data available for the selected metric and school</div>';
-      }
-      
-      // Create year-over-year comparison if previous year data is available
-      if (previousYearData.length > 0) {
-        const prevFilteredData = selectedSchool === 'all' 
-          ? previousYearData 
-          : previousYearData.filter(item => item['School Name'] === selectedSchool);
-        
-        let prevStudentsWithGoals = 0;
-        let prevStudentsMetGoal = 0;
-        
-        prevFilteredData.forEach(row => {
-          prevStudentsWithGoals += parseInt(row[goalColumn]) || 0;
-          prevStudentsMetGoal += parseInt(row[metGoalColumn]) || 0;
+      if (filteredData.length === 0) {
+        ['goal-progress-chart', 'goal-trends-chart', 'comparative-chart', 'goal-distribution-chart'].forEach(chartId => {
+          document.getElementById(chartId).innerHTML = '<div style="text-align: center; padding: 40px; color: #777;">No data available for selected filters</div>';
         });
-        
-        const prevSuccessRate = prevStudentsWithGoals > 0 
-          ? Math.round((prevStudentsMetGoal / prevStudentsWithGoals) * 100) 
-          : 0;
-        
-        const selectedYear = document.getElementById('yearSelect').value;
-        const years = Object.keys(csvUrls);
-        const currentYearIndex = years.indexOf(selectedYear);
-        const previousYear = currentYearIndex < years.length - 1 ? years[currentYearIndex + 1] : "Previous";
-        
-        const currentYearLabel = selectedYear.replace('_', '-');
-        const previousYearLabel = previousYear.replace('_', '-');
-        
-        Plotly.newPlot('year-comparison-chart', [
-          {
-            x: ['Students with Goals', 'Goals Met', 'Success Rate (%)'],
-            y: [studentsWithGoals, studentsMetGoal, successRate],
-            type: 'bar',
-            name: currentYearLabel,
-            marker: { color: '#0057B8' }
-          },
-          {
-            x: ['Students with Goals', 'Goals Met', 'Success Rate (%)'],
-            y: [prevStudentsWithGoals, prevStudentsMetGoal, prevSuccessRate],
-            type: 'bar',
-            name: previousYearLabel,
-            marker: { color: '#78BE20' }
-          }
-        ], {
-          title: {
-            text: `Year-over-Year Comparison for ${metricName}`,
-            font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
-          },
-          paper_bgcolor: '#fff',
-          plot_bgcolor: '#fff',
-          barmode: 'group',
-          margin: { t: 60, b: 80, l: 50, r: 30 },
-          height: 400
-        }, {responsive: true});
-      } else {
-        // If no previous year data, show a message
-        document.getElementById('year-comparison-chart').innerHTML = 
-          '<div style="text-align: center; padding: 50px; color: #777;">No previous year data available for comparison</div>';
+        return;
       }
-      
-      // Create goal distribution across all metrics with better spacing
-      const metrics = ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness'];
-      const goalCounts = metrics.map(metric => {
-        const col = `${metric}: CM students w/ goal`;
-        return filteredData.reduce((sum, row) => sum + (parseInt(row[col]) || 0), 0);
-      });
-      
-      Plotly.newPlot('goal-distribution-chart', [{
-        x: metrics,
-        y: goalCounts,
-        type: 'bar',
-        marker: {
-          color: '#00A9E0'
-        },
-        text: goalCounts,
-        textposition: 'auto'
-      }], {
-        title: {
-          text: 'Goal Distribution Across Categories',
-          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
-        },
-        paper_bgcolor: '#fff',
-        plot_bgcolor: '#fff',
-        margin: { t: 60, b: 120, l: 60, r: 30 },
-        height: 400,
-        xaxis: {
-          tickangle: -45,
-          tickfont: { size: 12 }
-        },
-        yaxis: {
-          title: 'Number of Students with Goals'
-        }
-      }, {responsive: true});
+
+      try {
+        updateMetrics(filteredData, selectedGoal);
+        updateProgressChart(filteredData, selectedGoal, metricFocus);
+        updateTrendsChart(filteredData, selectedGoal);
+        updateComparativeChart(filteredData, selectedGoal);
+        updateDistributionChart(filteredData, selectedGoal);
+      } catch (error) {
+        console.error('Error updating visualizations:', error);
+      }
     }
 
-    // Initialize the dashboard
-    loadData();
+    function updateMetrics(filteredData, selectedGoal) {
+      const metrics = calculateMetrics(filteredData, selectedGoal);
+      
+      document.getElementById('students-with-goals').textContent = metrics.studentsWithGoals;
+      document.getElementById('goals-met').textContent = metrics.goalsMet;
+      document.getElementById('success-rate').textContent = metrics.successRate + '%';
+      document.getElementById('progress-rate').textContent = metrics.progressRate + '%';
+      document.getElementById('students-progressing').textContent = metrics.studentsProgressing;
+    }
+
+    function calculateMetrics(filteredData, selectedGoal) {
+      const categories = selectedGoal === 'all' ? goalCategories : [selectedGoal];
+      
+      let totalStudentsWithGoals = 0;
+      let totalGoalsMet = 0;
+      let totalStudentsProgressing = 0;
+      
+      categories.forEach(category => {
+        filteredData.forEach(row => {
+          const studentsWithGoal = parseInt(row[`${category}: CM students w/ goal`]) || 0;
+          const studentsMet = parseInt(row[`${category}: CM students met goal`]) || 0;
+          const studentsProgress = parseInt(row[`${category}: CM students not met, with progress`]) || 0;
+          
+          totalStudentsWithGoals += studentsWithGoal;
+          totalGoalsMet += studentsMet;
+          totalStudentsProgressing += studentsProgress;
+        });
+      });
+
+      const successRate = totalStudentsWithGoals > 0 ? Math.round((totalGoalsMet / totalStudentsWithGoals) * 100) : 0;
+      const progressRate = totalStudentsWithGoals > 0 ? Math.round(((totalGoalsMet + totalStudentsProgressing) / totalStudentsWithGoals) * 100) : 0;
+
+      return {
+        studentsWithGoals: totalStudentsWithGoals,
+        goalsMet: totalGoalsMet,
+        successRate,
+        progressRate,
+        studentsProgressing: totalStudentsProgressing
+      };
+    }
+
+    function updateProgressChart(filteredData, selectedGoal, metricFocus) {
+      const categories = selectedGoal === 'all' ? goalCategories : [selectedGoal];
+      
+      if (metricFocus === 'goals') {
+        // Show goal setting by category
+        const data = categories.map(category => {
+          let total = 0;
+          filteredData.forEach(row => {
+            total += parseInt(row[`${category}: CM students w/ goal`]) || 0;
+          });
+          return total;
+        });
+
+        const chartData = [{
+          x: categories,
+          y: data,
+          type: 'bar',
+          marker: { color: '#0057B8' },
+          text: data.map(d => `${d} students`),
+          textposition: 'auto'
+        }];
+
+        const layout = {
+          title: { text: 'Students with Goals by Category', font: { size: 18, color: '#0057B8' } },
+          xaxis: { title: 'Goal Categories', tickangle: -45 },
+          yaxis: { title: 'Number of Students' },
+          height: 400,
+          font: { family: 'Segoe UI, Arial, sans-serif' },
+          margin: { bottom: 100 }
+        };
+
+        Plotly.newPlot('goal-progress-chart', chartData, layout, {responsive: true});
+      } else {
+        // Show progress breakdown
+        const progressData = {
+          'Goals Met': 0,
+          'Making Progress': 0,
+          'No Progress': 0
+        };
+
+        categories.forEach(category => {
+          filteredData.forEach(row => {
+            progressData['Goals Met'] += parseInt(row[`${category}: CM students met goal`]) || 0;
+            progressData['Making Progress'] += parseInt(row[`${category}: CM students not met, with progress`]) || 0;
+            progressData['No Progress'] += parseInt(row[`${category}: CM students not met, no progress`]) || 0;
+          });
+        });
+
+        const chartData = [{
+          labels: Object.keys(progressData),
+          values: Object.values(progressData),
+          type: 'pie',
+          hole: 0.4,
+          textinfo: 'label+percent+value',
+          texttemplate: '%{label}<br>%{value} students<br>%{percent}',
+          marker: {
+            colors: ['#78BE20', '#FFC72C', '#E31B23']
+          }
+        }];
+
+        const layout = {
+          title: { text: 'Goal Progress Breakdown', font: { size: 18, color: '#0057B8' } },
+          height: 400,
+          font: { family: 'Segoe UI, Arial, sans-serif' }
+        };
+
+        Plotly.newPlot('goal-progress-chart', chartData, layout, {responsive: true});
+      }
+    }
+
+    function updateTrendsChart(filteredData, selectedGoal) {
+      const categories = selectedGoal === 'all' ? goalCategories : [selectedGoal];
+      
+      const chartData = [{
+        x: categories,
+        y: categories.map(category => {
+          let successRate = 0;
+          let totalWithGoals = 0;
+          let totalMet = 0;
+          
+          filteredData.forEach(row => {
+            const withGoals = parseInt(row[`${category}: CM students w/ goal`]) || 0;
+            const met = parseInt(row[`${category}: CM students met goal`]) || 0;
+            totalWithGoals += withGoals;
+            totalMet += met;
+          });
+          
+          successRate = totalWithGoals > 0 ? (totalMet / totalWithGoals) * 100 : 0;
+          return Math.round(successRate);
+        }),
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#0057B8', width: 3 },
+        marker: { color: '#0057B8', size: 8 },
+        name: 'Success Rate %'
+      }];
+
+      const layout = {
+        title: { text: 'Goal Success Rates by Category', font: { size: 18, color: '#0057B8' } },
+        xaxis: { title: 'Goal Categories', tickangle: -45 },
+        yaxis: { title: 'Success Rate (%)', range: [0, 100] },
+        height: 400,
+        font: { family: 'Segoe UI, Arial, sans-serif' },
+        margin: { bottom: 100 }
+      };
+
+      Plotly.newPlot('goal-trends-chart', chartData, layout, {responsive: true});
+    }
+
+    function updateComparativeChart(filteredData, selectedGoal) {
+      if (previousYearData.length === 0) {
+        document.getElementById('comparative-chart').innerHTML = '<div style="text-align: center; padding: 40px; color: #777;">Previous year data not available for comparison</div>';
+        return;
+      }
+
+      const categories = selectedGoal === 'all' ? goalCategories : [selectedGoal];
+      
+      const currentYearData = categories.map(category => {
+        let total = 0;
+        filteredData.forEach(row => {
+          total += parseInt(row[`${category}: CM students met goal`]) || 0;
+        });
+        return total;
+      });
+
+      const previousData = categories.map(category => {
+        let total = 0;
+        previousYearData.forEach(row => {
+          total += parseInt(row[`${category}: CM students met goal`]) || 0;
+        });
+        return total;
+      });
+
+      const chartData = [
+        {
+          x: categories,
+          y: currentYearData,
+          type: 'bar',
+          name: 'Current Year',
+          marker: { color: '#0057B8' }
+        },
+        {
+          x: categories,
+          y: previousData,
+          type: 'bar',
+          name: 'Previous Year',
+          marker: { color: '#00A9E0' }
+        }
+      ];
+
+      const layout = {
+        title: { text: 'Year-over-Year Goal Comparison', font: { size: 18, color: '#0057B8' } },
+        xaxis: { title: 'Goal Categories', tickangle: -45 },
+        yaxis: { title: 'Goals Met' },
+        height: 400,
+        barmode: 'group',
+        font: { family: 'Segoe UI, Arial, sans-serif' },
+        margin: { bottom: 100 }
+      };
+
+      Plotly.newPlot('comparative-chart', chartData, layout, {responsive: true});
+    }
+
+    function updateDistributionChart(filteredData, selectedGoal) {
+      const schoolData = {};
+      const categories = selectedGoal === 'all' ? goalCategories : [selectedGoal];
+      
+      filteredData.forEach(row => {
+        const schoolName = row['School Name'];
+        if (!schoolData[schoolName]) {
+          schoolData[schoolName] = 0;
+        }
+        
+        categories.forEach(category => {
+          schoolData[schoolName] += parseInt(row[`${category}: CM students met goal`]) || 0;
+        });
+      });
+
+      const schools = Object.keys(schoolData);
+      const values = Object.values(schoolData);
+
+      const chartData = [{
+        x: schools,
+        y: values,
+        type: 'bar',
+        marker: { color: '#0057B8' },
+        text: values.map(v => `${v} goals met`),
+        textposition: 'auto'
+      }];
+
+      const layout = {
+        title: { text: 'Goals Met by School', font: { size: 18, color: '#0057B8' } },
+        xaxis: { title: 'Schools', tickangle: -45 },
+        yaxis: { title: 'Goals Met' },
+        height: 400,
+        font: { family: 'Segoe UI, Arial, sans-serif' },
+        margin: { bottom: 120 }
+      };
+
+      Plotly.newPlot('goal-distribution-chart', chartData, layout, {responsive: true});
+    }
   </script>
 </body>
 </html>

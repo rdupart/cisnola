@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tier Support Activities - CISEPA Dashboard</title>
   <link rel="stylesheet" href="css/styles.css">
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
   <style>
     body {
@@ -22,9 +22,15 @@
     .controls {
       display: flex;
       flex-wrap: wrap;
-      gap: 15px;
-      margin-bottom: 25px;
+      gap: 20px;
+      margin: 40px auto;
       align-items: center;
+      justify-content: center;
+      max-width: 1400px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 87, 184, 0.05);
     }
     label {
       font-weight: 600;
@@ -47,9 +53,11 @@
       background: #fff;
       border-radius: 14px;
       box-shadow: 0 2px 16px rgba(0, 87, 184, 0.07);
-      padding: 20px;
-      margin-bottom: 25px;
+      padding: 40px;
+      margin: 50px auto;
       border-top: 3px solid #0057B8;
+      max-width: 1600px;
+      min-height: 700px;
     }
     .chart-container:hover {
       box-shadow: 0 6px 24px rgba(0, 87, 184, 0.17);
@@ -59,6 +67,17 @@
       padding: 20px;
       font-style: italic;
       color: #666;
+    }
+    .charts-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .section-title {
+      text-align: center;
+      margin: 40px 0;
+      font-size: 2.5rem;
+      color: #0057B8;
     }
   </style>
 </head>
@@ -85,14 +104,14 @@
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">Current Dashboards</a>
         <ul class="dropdown-menu">
-          <li><a href="dashboards/support-profiles.html">Support Profiles</a></li>
-          <li><a href="dashboards/referral-reasons.html">Referral Reasons</a></li>
+          <li><a href="student_support_dashboards.html">Support Profiles</a></li>
+          <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
         </ul>
       </li>
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">Annual Outcomes</a>
         <ul class="dropdown-menu">
-          <li><a href="annual/students-served.html">Students Served</a></li>
+          <li><a href="student_engagement.html">Students Served</a></li>
           <li><a href="school_goals.html">Schoolwide Goals</a></li>
           <li><a href="tier_support_activites.html" class="active">Tier Support Activities</a></li>
           <li><a href="goals.html">Student Goals</a></li>
@@ -156,16 +175,18 @@
         </div>
       </div>
       
-      <div id="activities-chart" class="chart-container">
-        <div class="loading">Loading activities data...</div>
-      </div>
-      
-      <div id="categories-chart" class="chart-container">
-        <div class="loading">Loading categories data...</div>
-      </div>
-      
-      <div id="monthly-trend" class="chart-container">
-        <div class="loading">Loading school data...</div>
+      <div class="charts-wrapper">
+        <div id="activities-chart" class="chart-container">
+          <div class="loading">Loading activities data...</div>
+        </div>
+        
+        <div id="categories-chart" class="chart-container">
+          <div class="loading">Loading categories data...</div>
+        </div>
+        
+        <div id="monthly-trend" class="chart-container">
+          <div class="loading">Loading school data...</div>
+        </div>
       </div>
     </section>
   </main>
@@ -266,6 +287,8 @@
       const selectedTier = document.getElementById('tierSelect').value;
       const chartType = document.getElementById('chartTypeSelect').value;
       
+      console.log('Updating charts with data:', data.length, 'records');
+      
       // Filter data based on selections
       let filteredData = data;
       
@@ -273,28 +296,47 @@
         filteredData = filteredData.filter(item => item['School Name'] === selectedSchool);
       }
       
+      console.log('Filtered data:', filteredData.length, 'records');
+      
       if (filteredData.length === 0) {
-        document.getElementById('activities-chart').innerHTML = '<div class="no-data">No data available for the selected school.</div>';
-        document.getElementById('categories-chart').innerHTML = '<div class="no-data">No data available for the selected school.</div>';
-        document.getElementById('monthly-trend').innerHTML = '<div class="no-data">No data available for the selected school.</div>';
+        document.getElementById('activities-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">No data available for the selected school.</div>';
+        document.getElementById('categories-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">No data available for the selected school.</div>';
+        document.getElementById('monthly-trend').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">No data available for the selected school.</div>';
         return;
       }
 
       // Calculate support activities from actual CSV columns
       const supportCategories = ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness'];
       
-      // Create activity chart based on actual goal data
-      createGoalActivitiesChart(filteredData, chartType, supportCategories);
+      // Clear loading messages before creating charts
+      document.getElementById('activities-chart').innerHTML = '';
+      document.getElementById('categories-chart').innerHTML = '';
+      document.getElementById('monthly-trend').innerHTML = '';
       
-      // Create categories chart based on actual progress data
-      createProgressCategoriesChart(filteredData, chartType, supportCategories);
-      
-      // Create trend chart (simplified for now)
-      createSchoolDistributionChart(filteredData);
+      // Clear loading messages and create charts
+      try {
+        // Create activity chart based on actual goal data
+        createGoalActivitiesChart(filteredData, chartType, supportCategories);
+        
+        // Create categories chart based on actual progress data
+        createProgressCategoriesChart(filteredData, chartType, supportCategories);
+        
+        // Create trend chart (simplified for now)
+        createSchoolDistributionChart(filteredData);
+        
+        console.log('Charts created successfully');
+      } catch (error) {
+        console.error('Error creating charts:', error);
+        document.getElementById('activities-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">Error creating chart</div>';
+        document.getElementById('categories-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">Error creating chart</div>';
+        document.getElementById('monthly-trend').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">Error creating chart</div>';
+      }
     }
     
     // Create activities chart from goal data
     function createGoalActivitiesChart(filteredData, chartType, categories) {
+      console.log('Creating activities chart with', filteredData.length, 'records');
+      
       const activityCounts = {};
       
       filteredData.forEach(row => {
@@ -317,8 +359,10 @@
       const activities = Object.keys(activityCounts);
       const counts = Object.values(activityCounts);
       
+      console.log('Activity counts:', activityCounts);
+      
       if (activities.length === 0) {
-        document.getElementById('activities-chart').innerHTML = '<div class="no-data">No goal activity data available for the selected filters.</div>';
+        document.getElementById('activities-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">No goal activity data available for the selected filters.</div>';
         return;
       }
       
@@ -348,26 +392,37 @@
       const layout = {
         title: {
           text: 'Student Goal Activities',
-          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+          font: { size: 20, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
         },
         paper_bgcolor: '#fff',
         plot_bgcolor: '#fff',
-        margin: { t: 60, b: 100, l: 50, r: 30 },
-        height: 400,
-        xaxis: chartType === 'bar' ? { 
+        margin: { t: 80, b: 130, l: 80, r: 60 },
+        height: 550
+      };
+
+      if (chartType === 'bar') {
+        layout.xaxis = { 
           tickangle: -45,
           title: 'Activity Type'
-        } : undefined,
-        yaxis: chartType === 'bar' ? { 
+        };
+        layout.yaxis = { 
           title: 'Number of Students'
-        } : undefined
-      };
+        };
+      }
       
-      Plotly.newPlot('activities-chart', chartData, layout, {responsive: true});
+      try {
+        Plotly.newPlot('activities-chart', chartData, layout, {responsive: true});
+        console.log('Activities chart plotted successfully');
+      } catch (error) {
+        console.error('Error plotting activities chart:', error);
+        document.getElementById('activities-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">Error creating activities chart</div>';
+      }
     }
     
     // Create categories chart from progress data
     function createProgressCategoriesChart(filteredData, chartType, categories) {
+      console.log('Creating categories chart with', filteredData.length, 'records');
+      
       const categoryCounts = {};
       
       filteredData.forEach(row => {
@@ -387,8 +442,10 @@
       const categoryNames = Object.keys(categoryCounts);
       const counts = Object.values(categoryCounts);
       
+      console.log('Category counts:', categoryCounts);
+      
       if (categoryNames.length === 0) {
-        document.getElementById('categories-chart').innerHTML = '<div class="no-data">No category progress data available for the selected filters.</div>';
+        document.getElementById('categories-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">No category progress data available for the selected filters.</div>';
         return;
       }
       
@@ -418,37 +475,66 @@
       const layout = {
         title: {
           text: 'Support Categories by Student Count',
-          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+          font: { size: 20, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
         },
         paper_bgcolor: '#fff',
         plot_bgcolor: '#fff',
-        margin: { t: 60, b: 100, l: 50, r: 30 },
-        height: 400,
-        xaxis: chartType === 'bar' ? { 
+        margin: { t: 80, b: 130, l: 80, r: 60 },
+        height: 550
+      };
+
+      if (chartType === 'bar') {
+        layout.xaxis = { 
           tickangle: -45,
           title: 'Support Category'
-        } : undefined,
-        yaxis: chartType === 'bar' ? { 
+        };
+        layout.yaxis = { 
           title: 'Number of Students'
-        } : undefined
-      };
+        };
+      }
       
-      Plotly.newPlot('categories-chart', chartData, layout, {responsive: true});
+      try {
+        Plotly.newPlot('categories-chart', chartData, layout, {responsive: true});
+        console.log('Categories chart plotted successfully');
+      } catch (error) {
+        console.error('Error plotting categories chart:', error);
+        document.getElementById('categories-chart').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">Error creating categories chart</div>';
+      }
     }
     
     // Create school distribution chart instead of trends
     function createSchoolDistributionChart(filteredData) {
+      console.log('Creating school distribution chart with', filteredData.length, 'records');
+      
       // Show a simple summary by school since we don't have monthly data
       const schoolNames = [...new Set(filteredData.map(row => row['School Name']))].filter(Boolean);
       
+      console.log('School names found:', schoolNames);
+      
       if (schoolNames.length === 0) {
-        document.getElementById('monthly-trend').innerHTML = '<div class="no-data">No school data available.</div>';
+        document.getElementById('monthly-trend').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">No school data available.</div>';
         return;
       }
       
+      // Calculate actual students served by summing goal counts per school
       const schoolCounts = schoolNames.map(school => {
-        return filteredData.filter(row => row['School Name'] === school).length;
+        const schoolData = filteredData.filter(row => row['School Name'] === school);
+        
+        // Sum up students with goals across all categories for this school
+        let totalStudents = 0;
+        const categories = ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness'];
+        
+        schoolData.forEach(row => {
+          categories.forEach(category => {
+            const studentsWithGoals = parseInt(row[`${category}: CM students w/ goal`]) || 0;
+            totalStudents += studentsWithGoals;
+          });
+        });
+        
+        return totalStudents;
       });
+      
+      console.log('School counts by actual students:', schoolNames.map((name, i) => ({ school: name, students: schoolCounts[i] })));
       
       const chartData = [{
         x: schoolNames,
@@ -463,23 +549,36 @@
       
       const layout = {
         title: {
-          text: 'Students Served by School',
-          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+          text: 'Total Students Served by School (All Goal Categories)',
+          font: { size: 20, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
         },
         paper_bgcolor: '#fff',
         plot_bgcolor: '#fff',
-        margin: { t: 60, b: 100, l: 50, r: 30 },
-        height: 400,
+        margin: { t: 80, b: 150, l: 80, r: 50 },
+        height: 600,
         xaxis: { 
-          title: 'School',
-          tickangle: -45
+          title: {
+            text: 'School',
+            font: { size: 14, color: '#333' }
+          },
+          tickangle: -45,
+          tickfont: { size: 10 }
         },
         yaxis: { 
-          title: 'Number of Students'
+          title: {
+            text: 'Total Number of Students with Goals',
+            font: { size: 14, color: '#333' }
+          }
         }
       };
       
-      Plotly.newPlot('monthly-trend', chartData, layout, {responsive: true});
+      try {
+        Plotly.newPlot('monthly-trend', chartData, layout, {responsive: true});
+        console.log('School distribution chart plotted successfully');
+      } catch (error) {
+        console.error('Error plotting school distribution chart:', error);
+        document.getElementById('monthly-trend').innerHTML = '<div style="text-align: center; padding: 50px; color: #777;">Error creating school distribution chart</div>';
+      }
     }
     
     // Load initial data when page loads

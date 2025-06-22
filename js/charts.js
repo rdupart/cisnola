@@ -97,6 +97,11 @@ function setupTabNavigation() {
 
 // Load Student Support Dashboard data
 function loadStudentSupportData() {
+  // Check if the required elements exist on this page
+  if (!document.getElementById('tier2-chart') || !document.getElementById('tier3-chart') || !document.getElementById('combined-chart')) {
+    return; // Exit if elements don't exist (wrong page)
+  }
+  
   // Reset chart initialization status
   chartsInitialized.tier2 = false;
   chartsInitialized.tier3 = false;
@@ -128,6 +133,11 @@ function loadStudentSupportData() {
 
 // Load Tier Support Activities data
 function loadTierSupportData() {
+  // Check if the required elements exist on this page
+  if (!document.getElementById('support-chart') || !document.getElementById('activity-report') || !document.getElementById('yearly-trend') || !document.getElementById('combined-bar-chart')) {
+    return; // Exit if elements don't exist (wrong page)
+  }
+  
   // Reset chart initialization status
   chartsInitialized.support = false;
   chartsInitialized.activity = false;

@@ -6,13 +6,13 @@
   <title>Demographics - CISEPA Dashboard</title>
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
   <style>
     .charts-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
       gap: 32px;
-      max-width: 900px;
+      max-width: 1400px;
       margin: 0 auto 40px auto;
       padding: 0 20px;
     }
@@ -20,10 +20,11 @@
       background: #fff;
       border-radius: 14px;
       box-shadow: 0 2px 16px rgba(0, 87, 184, 0.07);
-      padding: 18px 18px 8px 18px;
+      padding: 30px;
       transition: box-shadow 0.2s;
       margin-bottom: 6px;
       border-top: 3px solid #0057B8;
+      min-height: 500px;
     }
     .chart-box:hover {
       box-shadow: 0 6px 24px rgba(0, 87, 184, 0.17);
@@ -58,7 +59,7 @@
     }
     .tab-content {
       display: none;
-      max-width: 900px;
+      max-width: 1400px;
       margin: 0 auto 40px auto;
       padding: 0 20px;
     }
@@ -90,33 +91,23 @@
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">Current Dashboards</a>
         <ul class="dropdown-menu">
-          <li><a href="dashboards/support-profiles.html">Support Profiles</a></li>
-          <li><a href="dashboards/referral-reasons.html">Referral Reasons</a></li>
+          <li><a href="index.html#student-services-overview">Student Services Overview</a></li>
+          <li><a href="tier_activities.html">Tier Support Activities</a></li>
         </ul>
       </li>
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">Annual Outcomes</a>
         <ul class="dropdown-menu">
-          <li><a href="annual/students-served.html">Students Served</a></li>
-          <li><a href="school_goals.html">Schoolwide Goals</a></li>
-          <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
-          <li><a href="goals.html">Student Goals</a></li>
+          <li><a href="student_engagement.html">Students Served</a></li>
+          <li><a href="student_progress_tracker.html">Student Progress</a></li>
           <li><a href="demographics.html" class="active">Demographics</a></li>
           <li><a href="attributes.html">Student Attributes</a></li>
-          <li><a href="student_progress_tracker.html">Student Progress</a></li>
         </ul>
       </li>
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">More...</a>
         <ul class="dropdown-menu">
-          <li><a href="index.html">Home</a></li>
-          <li><a href="#current-dashboards">Current Dashboards</a></li>
-          <li><a href="#annual-outcomes">Annual Outcomes</a></li>
-          <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
-          <li><a href="tier_activities.html">Tier Activities</a></li>
-          <li><a href="tier_activities.html">Tier II</a></li>
-          <li><a href="tier_support_activites.html">Tier III</a></li>
-          <li><a href="student_progress_tracker.html">Student Progress Tracker</a></li>
+          <li><a href="school.html">School Dashboard</a></li>
         </ul>
       </li>
     </ul>
@@ -136,7 +127,7 @@
         </div>
         <div>
           <label for="yearSelect">Select Year:</label>
-          <select id="yearSelect" onchange="updateCharts()">
+          <select id="yearSelect" onchange="loadAllCSVs()">
             <option value="2023-2024">2023-2024</option>
             <option value="2022-2023">2022-2023</option>
             <option value="2021-2022">2021-2022</option>
@@ -235,6 +226,9 @@
           
           // Populate school dropdown
           populateSchoolDropdown();
+          
+          // Activate first tab and load initial charts
+          activateFirstTab();
         },
         error: function(error) {
           console.error('Error loading CSV:', error);
@@ -272,7 +266,11 @@
     function updateCharts() {
       // Get the active tab
       const activeTab = document.querySelector('.tab-button.active');
-      if (!activeTab) return;
+      if (!activeTab) {
+        // If no tab is active, activate the first tab
+        activateFirstTab();
+        return;
+      }
       
       const tabId = activeTab.getAttribute('data-tab');
       
@@ -300,7 +298,9 @@
     }
     
     function updateGenderChart() {
+      console.log("updateGenderChart called");
       const filtered = getFilteredData();
+      console.log("Filtered data length:", filtered.length);
 
       // Calculate gender distribution by summing across race columns
       const genderCounts = {
@@ -309,6 +309,11 @@
         'Other Gender': 0,
         'Unknown Gender': 0
       };
+
+      // Debug: log column names to check pattern matching
+      if (filtered.length > 0) {
+        console.log("Sample column names:", Object.keys(filtered[0]));
+      }
 
       filtered.forEach(row => {
         // Sum all female columns
@@ -343,7 +348,7 @@
       console.log("Gender Counts:", genderCounts);
 
       if (genderValues.every(val => val === 0)) {
-          document.getElementById('genderChart').innerHTML = '<p>No gender data available for this selection.</p>';
+          document.getElementById('genderChart').innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><p>No gender data available for this selection.</p><p>Please try selecting a different school or year.</p></div>';
           return;
       }
 
@@ -503,12 +508,29 @@
       });
     });
     
-    // Load initial data
-    loadAllCSVs();
+    // Initialize page properly after DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Load initial data
+      loadAllCSVs();
+    });
     
-    // Activate the first tab by default
-    if (tabs.length > 0) {
-      tabs[0].click();
+    // Function to activate first tab after data is loaded
+    function activateFirstTab() {
+      if (tabs.length > 0) {
+        // Hide all tab contents first
+        tabContents.forEach(content => {
+          content.style.display = 'none';
+        });
+        
+        // Activate first tab
+        tabs[0].classList.add('active');
+        document.getElementById('gender-tab').style.display = 'block';
+        
+        // Load gender chart if data is available
+        if (allData && allData.length > 0) {
+          updateGenderChart();
+        }
+      }
     }
   </script>
 </body>

@@ -3,10 +3,83 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tier Activities - CISEPA Dashboard</title>
+  <title>Tier Support Activities - CISEPA Dashboard</title>
   <link rel="stylesheet" href="css/styles.css">
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      color: #0057B8;
+      margin-bottom: 20px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin: 40px auto;
+      align-items: center;
+      justify-content: center;
+      max-width: 1400px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 87, 184, 0.05);
+    }
+    label {
+      font-weight: 600;
+      margin-right: 8px;
+      color: #0057B8;
+    }
+    select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #b0b8c1;
+      background: #fff;
+      font-size: 1rem;
+      transition: border 0.2s;
+    }
+    select:focus {
+      border: 1.5px solid #0057B8;
+      outline: none;
+    }
+    .chart-container {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0, 87, 184, 0.07);
+      padding: 40px;
+      margin: 50px auto;
+      border-top: 3px solid #0057B8;
+      max-width: 1600px;
+      min-height: 700px;
+    }
+    .chart-container:hover {
+      box-shadow: 0 6px 24px rgba(0, 87, 184, 0.17);
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-style: italic;
+      color: #666;
+    }
+    .charts-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .section-title {
+      text-align: center;
+      margin: 40px 0;
+      font-size: 2.5rem;
+      color: #0057B8;
+    }
+  </style>
 </head>
 <body>
   <!-- Header Section -->
@@ -31,33 +104,24 @@
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">Current Dashboards</a>
         <ul class="dropdown-menu">
-          <li><a href="dashboards/support-profiles.html">Support Profiles</a></li>
-          <li><a href="dashboards/referral-reasons.html">Referral Reasons</a></li>
+          <li><a href="index.html#student-services-overview">Student Services Overview</a></li>
+          <li><a href="tier_activities.html">Tier Support Activities</a></li>
         </ul>
       </li>
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">Annual Outcomes</a>
         <ul class="dropdown-menu">
-          <li><a href="annual/students-served.html">Students Served</a></li>
-          <li><a href="school_goals.html">Schoolwide Goals</a></li>
-          <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
-          <li><a href="goals.html">Student Goals</a></li>
+          <li><a href="student_engagement.html">Students Served</a></li>
+
+          <li><a href="student_progress_tracker.html">Student Progress</a></li>
           <li><a href="demographics.html">Demographics</a></li>
           <li><a href="attributes.html">Student Attributes</a></li>
-          <li><a href="student_progress_tracker.html">Student Progress</a></li>
         </ul>
       </li>
       <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle">More...</a>
         <ul class="dropdown-menu">
-          <li><a href="index.html">Home</a></li>
-          <li><a href="#current-dashboards">Current Dashboards</a></li>
-          <li><a href="#annual-outcomes">Annual Outcomes</a></li>
-          <li><a href="tier_support_activites.html">Tier Support Activities</a></li>
-          <li><a href="tier_activities.html" class="active">Tier Activities</a></li>
-          <li><a href="tier_activities.html">Tier II</a></li>
-          <li><a href="tier_support_activites.html">Tier III</a></li>
-          <li><a href="student_progress_tracker.html">Student Progress Tracker</a></li>
+          <li><a href="school.html">School Dashboard</a></li>
         </ul>
       </li>
     </ul>
@@ -66,11 +130,11 @@
   <!-- Main Content -->
   <main id="main-content">
     <section class="content-section">
-      <h1 class="section-title">Tier Activities Dashboard</h1>
+      <h1 class="section-title">Tier Support Activities Dashboard</h1>
 
       <div class="controls">
         <div>
-          <label for="yearSelect">Select Year:</label>
+          <label for="yearSelect">School Year:</label>
           <select id="yearSelect" onchange="loadData()">
             <option value="2023_2024" selected>2023-2024</option>
             <option value="2022_2023">2022-2023</option>
@@ -84,9 +148,30 @@
           </select>
         </div>
         <div>
-          <label for="schoolSelect">Select School:</label>
-          <select id="schoolSelect" onchange="updateCategoryDropdowns()">
+          <label for="schoolSelect">School:</label>
+          <select id="schoolSelect" onchange="updateCharts()">
             <option value="all">All Schools</option>
+          </select>
+        </div>
+        <div>
+          <label for="tierSelect">Support Tier:</label>
+          <select id="tierSelect" onchange="updateCharts()">
+            <option value="all">All Tiers</option>
+            <option value="tier2">Tier II</option>
+            <option value="tier3">Tier III</option>
+          </select>
+        </div>
+        <div>
+          <label for="supportCategorySelect">Support Category:</label>
+          <select id="supportCategorySelect" onchange="updateCharts()">
+            <option value="all">All Categories</option>
+            <option value="Attendance">Attendance</option>
+            <option value="Behavior">Behavior</option>
+            <option value="Academics">Academics</option>
+            <option value="SEL">SEL</option>
+            <option value="High Risk Behavior">High Risk Behavior</option>
+            <option value="College Readiness">College Readiness</option>
+            <option value="Career Readiness">Career Readiness</option>
           </select>
         </div>
         <div>
@@ -96,26 +181,25 @@
             <option value="bar">Bar Chart</option>
           </select>
         </div>
-        <div>
-          <label for="supportCategorySelect">Select Support Category:</label>
-          <select id="supportCategorySelect" onchange="updateCharts()">
-            <option value="all">All Categories</option>
-          </select>
-        </div>
       </div>
 
       <!-- Chart containers -->
-      <div class="chart-container">
-        <div id="support-chart"></div>
-      </div>
-      <div class="chart-container">
-        <div id="activity-report"></div>
-      </div>
-      <div class="chart-container">
-        <div id="yearly-trend"></div>
-      </div>
-      <div class="chart-container">
-        <div id="combined-bar-chart"></div>
+      <div class="charts-wrapper">
+        <div id="activities-chart" class="chart-container">
+          <div class="loading">Loading activities data...</div>
+        </div>
+        
+        <div id="categories-chart" class="chart-container">
+          <div class="loading">Loading categories data...</div>
+        </div>
+        
+        <div id="school-distribution-chart" class="chart-container">
+          <div class="loading">Loading school distribution data...</div>
+        </div>
+        
+        <div id="yearly-trend-chart" class="chart-container">
+          <div class="loading">Loading yearly trend data...</div>
+        </div>
       </div>
     </section>
   </main>
@@ -150,14 +234,27 @@
 
     let data = [];
 
+    // Load data on page initialization
+    document.addEventListener('DOMContentLoaded', function() {
+      loadData();
+    });
+
     function loadData() {
       const yearSelect = document.getElementById('yearSelect');
-      const selectedYear = yearSelect.value; // Get selected year
+      const selectedYear = yearSelect.value;
 
-      fetchCSV(selectedYear); // Fetch data for selected year
+      // Show loading indicators
+      document.getElementById('activities-chart').innerHTML = '<div class="loading">Loading activities data...</div>';
+      document.getElementById('categories-chart').innerHTML = '<div class="loading">Loading categories data...</div>';
+      document.getElementById('school-distribution-chart').innerHTML = '<div class="loading">Loading school distribution data...</div>';
+      document.getElementById('yearly-trend-chart').innerHTML = '<div class="loading">Loading yearly trend data...</div>';
+      
+      // Disable controls during loading
+      document.querySelectorAll('select').forEach(select => select.disabled = true);
+
+      fetchCSV(selectedYear);
     }
 
-    // Fetch CSV based on the year
     function fetchCSV(selectedYear) {
       const csvUrl = csvUrls[selectedYear];
       Papa.parse(csvUrl, {
@@ -167,11 +264,22 @@
         skipEmptyLines: true,
         complete: function(results) {
           data = results.data;
+          console.log("Loaded", data.length, "records for", selectedYear);
+          
+          // Re-enable controls
+          document.querySelectorAll('select').forEach(select => select.disabled = false);
+          
           populateSchoolDropdown();
-          updateCategoryDropdowns();
+          updateCharts();
         },
         error: function(error) {
           console.error('Error loading CSV:', error);
+          
+          // Re-enable controls
+          document.querySelectorAll('select').forEach(select => select.disabled = false);
+          
+          // Show error message
+          document.getElementById('activities-chart').innerHTML = '<div class="loading">Error loading data. Please try again.</div>';
         }
       });
     }
@@ -190,27 +298,11 @@
       });
     }
 
-    function updateCategoryDropdowns() {
-      // Update activity categories based on available data
-      const supportSelect = document.getElementById('supportCategorySelect');
-      supportSelect.innerHTML = '<option value="all">All Categories</option>';
-
-      // Add specific support categories
-      const categories = ['Tier I', 'Tier II', 'Tier III'];
-      categories.forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        supportSelect.appendChild(opt);
-      });
-
-      updateCharts();
-    }
-
     function updateCharts() {
       const selectedSchool = document.getElementById('schoolSelect').value;
       const chartType = document.getElementById('chartTypeSelect').value;
-      const selectedSupportCategory = document.getElementById('supportCategorySelect').value;
+      const selectedTier = document.getElementById('tierSelect').value;
+      const selectedCategory = document.getElementById('supportCategorySelect').value;
 
       let filteredData = data;
       if (selectedSchool !== 'all') {
@@ -218,138 +310,263 @@
       }
 
       if (filteredData.length === 0) {
-        document.getElementById('support-chart').innerHTML = '<p>No data available for the selected filters.</p>';
-        document.getElementById('activity-report').innerHTML = '<p>No activity data available for the selected filters.</p>';
-        document.getElementById('yearly-trend').innerHTML = '';
-        document.getElementById('combined-bar-chart').innerHTML = '';
+        ['activities-chart', 'categories-chart', 'school-distribution-chart', 'yearly-trend-chart'].forEach(chartId => {
+          document.getElementById(chartId).innerHTML = '<div class="loading">No data available for the selected filters.</div>';
+        });
         return;
       }
 
-      // Calculate support metrics from the actual data
-      const metrics = {
-        'Attendance Goals': 0,
-        'Behavior Goals': 0, 
-        'Academic Goals': 0,
-        'SEL Goals': 0,
-        'High Risk Behavior Goals': 0,
-        'College Readiness Goals': 0,
-        'Career Readiness Goals': 0
-      };
+      try {
+        updateActivitiesChart(filteredData, chartType, selectedTier, selectedCategory);
+        updateCategoriesChart(filteredData, chartType, selectedTier);
+        updateSchoolDistributionChart(filteredData, chartType);
+        updateYearlyTrendChart(filteredData);
+      } catch (error) {
+        console.error('Error updating charts:', error);
+      }
+    }
 
-      filteredData.forEach(row => {
-        if (row['Attendance: CM students w/ goal']) metrics['Attendance Goals'] += parseInt(row['Attendance: CM students w/ goal']) || 0;
-        if (row['Behavior: CM students w/ goal']) metrics['Behavior Goals'] += parseInt(row['Behavior: CM students w/ goal']) || 0;
-        if (row['Academics: CM students w/ goal']) metrics['Academic Goals'] += parseInt(row['Academics: CM students w/ goal']) || 0;
-        if (row['SEL: CM students w/ goal']) metrics['SEL Goals'] += parseInt(row['SEL: CM students w/ goal']) || 0;
-        if (row['High Risk Behavior: CM students w/ goal']) metrics['High Risk Behavior Goals'] += parseInt(row['High Risk Behavior: CM students w/ goal']) || 0;
-        if (row['College Readiness: CM students w/ goal']) metrics['College Readiness Goals'] += parseInt(row['College Readiness: CM students w/ goal']) || 0;
-        if (row['Career Readiness: CM students w/ goal']) metrics['Career Readiness Goals'] += parseInt(row['Career Readiness: CM students w/ goal']) || 0;
+    function updateActivitiesChart(filteredData, chartType, selectedTier, selectedCategory) {
+      // Calculate support metrics from the actual data
+      const categories = ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness'];
+      const metrics = {};
+      
+      categories.forEach(category => {
+        metrics[category] = 0;
+        filteredData.forEach(row => {
+          const goalColumn = `${category}: CM students w/ goal`;
+          const value = parseInt(row[goalColumn]) || 0;
+          metrics[category] += value;
+        });
       });
 
-      const supportNames = Object.keys(metrics);
-      const supportValues = Object.values(metrics);
-
-      if (supportValues.every(val => val === 0)) {
-        document.getElementById('support-chart').innerHTML = '<p>No activity data available for the selected filters.</p>';
-        document.getElementById('activity-report').innerHTML = '<p>No activity data available for the selected filters.</p>';
-        return;
+      // Filter by category if selected
+      let displayMetrics = metrics;
+      if (selectedCategory !== 'all') {
+        displayMetrics = { [selectedCategory]: metrics[selectedCategory] };
       }
 
-      // Create main support chart
-      const chartData = chartType === 'pie'
-        ? [{
-            labels: supportNames,
-            values: supportValues,
-            type: 'pie',
-            textinfo: 'label+value',
-            hole: 0.4,
-            marker: {
-              colors: ['#0057B8', '#E31B23', '#FFC72C', '#00A9E0', '#78BE20', '#6E2585', '#F7941E']
-            }
-          }]
-        : [{
-            x: supportNames,
-            y: supportValues,
-            type: 'bar',
-            marker: { color: '#0057B8' }
-          }];
+      const labels = Object.keys(displayMetrics);
+      const values = Object.values(displayMetrics);
+
+      const chartData = (chartType === 'pie') ? [{
+        labels: labels,
+        values: values,
+        type: 'pie',
+        hole: 0.4,
+        textinfo: 'label+percent+value',
+        texttemplate: '%{label}<br>%{value} students<br>%{percent}',
+        marker: {
+          colors: ['#0057B8', '#E31B23', '#FFC72C', '#00A9E0', '#78BE20', '#6E2585', '#F7941E']
+        }
+      }] : [{
+        x: labels,
+        y: values,
+        type: 'bar',
+        marker: {
+          color: '#0057B8'
+        },
+        text: values.map(v => `${v} students`),
+        textposition: 'auto'
+      }];
 
       const layout = {
         title: {
-          text: selectedSchool === 'all' ? 'Student Support Goals - All Schools' : `Student Support Goals - ${selectedSchool}`,
-          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+          text: 'Support Activities by Category',
+          font: { size: 18, color: '#0057B8' }
         },
-        paper_bgcolor: '#fff',
-        plot_bgcolor: '#fff',
-        margin: { t: 60, b: 80, l: 50, r: 30 },
-        responsive: true
+        height: 550,
+        showlegend: chartType === 'pie',
+        font: { family: 'Segoe UI, Arial, sans-serif' }
       };
 
       if (chartType === 'bar') {
-        layout.xaxis = { tickangle: -45 };
+        layout.xaxis = { title: 'Support Categories' };
+        layout.yaxis = { title: 'Number of Students' };
       }
 
-      Plotly.newPlot('support-chart', chartData, layout, {responsive: true});
-
-      // Create progress tracking chart
-      const progressData = {
-        'Goals Met': 0,
-        'Progress Made': 0,
-        'No Progress': 0
-      };
-
-      filteredData.forEach(row => {
-        progressData['Goals Met'] += (parseInt(row['Attendance: CM students met goal']) || 0) +
-                                    (parseInt(row['Behavior: CM students met goal']) || 0) +
-                                    (parseInt(row['Academics: CM students met goal']) || 0) +
-                                    (parseInt(row['SEL: CM students met goal']) || 0) +
-                                    (parseInt(row['High Risk Behavior: CM students met goal']) || 0) +
-                                    (parseInt(row['College Readiness: CM students met goal']) || 0) +
-                                    (parseInt(row['Career Readiness: CM students met goal']) || 0);
-
-        progressData['Progress Made'] += (parseInt(row['Attendance: CM students not met, with progress']) || 0) +
-                                       (parseInt(row['Behavior: CM students not met, with progress']) || 0) +
-                                       (parseInt(row['Academics: CM students not met, with progress']) || 0) +
-                                       (parseInt(row['SEL: CM students not met, with progress']) || 0) +
-                                       (parseInt(row['High Risk Behavior: CM students not met, with progress']) || 0) +
-                                       (parseInt(row['College Readiness: CM students not met, with progress']) || 0) +
-                                       (parseInt(row['Career Readiness: CM students not met, with progress']) || 0);
-
-        progressData['No Progress'] += (parseInt(row['Attendance: CM students not met, no progress']) || 0) +
-                                     (parseInt(row['Behavior: CM students not met, no progress']) || 0) +
-                                     (parseInt(row['Academics: CM students not met, no progress']) || 0) +
-                                     (parseInt(row['SEL: CM students not met, no progress']) || 0) +
-                                     (parseInt(row['High Risk Behavior: CM students not met, no progress']) || 0) +
-                                     (parseInt(row['College Readiness: CM students not met, no progress']) || 0) +
-                                     (parseInt(row['Career Readiness: CM students not met, no progress']) || 0);
-      });
-
-      Plotly.newPlot('activity-report', [{
-        labels: Object.keys(progressData),
-        values: Object.values(progressData),
-        type: 'pie',
-        textinfo: 'label+percent',
-        hole: 0.4,
-        marker: {
-          colors: ['#28a745', '#ffc107', '#dc3545']
-        }
-      }], {
-        title: {
-          text: 'Goal Progress Tracking',
-          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
-        },
-        paper_bgcolor: '#fff',
-        plot_bgcolor: '#fff',
-        margin: { t: 60, b: 30, l: 30, r: 30 },
-        responsive: true
-      }, {responsive: true});
-
-      // Clear other charts for now
-      document.getElementById('yearly-trend').innerHTML = '<div style="text-align: center; padding: 20px; color: #777;">Yearly trend analysis available in dedicated reports</div>';
-      document.getElementById('combined-bar-chart').innerHTML = '';
+      Plotly.newPlot('activities-chart', chartData, layout, {responsive: true});
     }
 
-    loadData();
+    function updateCategoriesChart(filteredData, chartType, selectedTier) {
+      const tierData = {
+        'Tier II': 0,
+        'Tier III': 0
+      };
+
+      // Count students in each tier based on having goals
+      filteredData.forEach(row => {
+        const categories = ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness'];
+        
+        let tier2Count = 0;
+        let tier3Count = 0;
+        
+        categories.forEach(category => {
+          const goalValue = parseInt(row[`${category}: CM students w/ goal`]) || 0;
+          const metValue = parseInt(row[`${category}: CM students met goal`]) || 0;
+          
+          // Simple heuristic: if more than half met goals, it's tier 2, otherwise tier 3
+          if (goalValue > 0) {
+            if (metValue / goalValue > 0.5) {
+              tier2Count += goalValue;
+            } else {
+              tier3Count += goalValue;
+            }
+          }
+        });
+        
+        tierData['Tier II'] += tier2Count;
+        tierData['Tier III'] += tier3Count;
+      });
+
+      // Filter by tier if selected
+      let displayData = tierData;
+      if (selectedTier !== 'all') {
+        const tierKey = selectedTier === 'tier2' ? 'Tier II' : 'Tier III';
+        displayData = { [tierKey]: tierData[tierKey] };
+      }
+
+      const labels = Object.keys(displayData);
+      const values = Object.values(displayData);
+
+      const chartData = (chartType === 'pie') ? [{
+        labels: labels,
+        values: values,
+        type: 'pie',
+        hole: 0.4,
+        textinfo: 'label+percent+value',
+        texttemplate: '%{label}<br>%{value} students<br>%{percent}',
+        marker: {
+          colors: ['#00A9E0', '#E31B23']
+        }
+      }] : [{
+        x: labels,
+        y: values,
+        type: 'bar',
+        marker: {
+          color: ['#00A9E0', '#E31B23']
+        },
+        text: values.map(v => `${v} students`),
+        textposition: 'auto'
+      }];
+
+      const layout = {
+        title: {
+          text: 'Student Distribution by Tier',
+          font: { size: 18, color: '#0057B8' }
+        },
+        height: 550,
+        showlegend: chartType === 'pie',
+        font: { family: 'Segoe UI, Arial, sans-serif' }
+      };
+
+      if (chartType === 'bar') {
+        layout.xaxis = { title: 'Support Tiers' };
+        layout.yaxis = { title: 'Number of Students' };
+      }
+
+      Plotly.newPlot('categories-chart', chartData, layout, {responsive: true});
+    }
+
+    function updateSchoolDistributionChart(filteredData, chartType) {
+      const schoolData = {};
+      
+      filteredData.forEach(row => {
+        const schoolName = row['School Name'];
+        if (!schoolData[schoolName]) {
+          schoolData[schoolName] = 0;
+        }
+        
+        // Count total students with goals across all categories
+        const categories = ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness'];
+        categories.forEach(category => {
+          const goalValue = parseInt(row[`${category}: CM students w/ goal`]) || 0;
+          schoolData[schoolName] += goalValue;
+        });
+      });
+
+      const labels = Object.keys(schoolData);
+      const values = Object.values(schoolData);
+
+      const chartData = (chartType === 'pie') ? [{
+        labels: labels,
+        values: values,
+        type: 'pie',
+        textinfo: 'label+percent',
+        texttemplate: '%{label}<br>%{percent}',
+        marker: {
+          colors: ['#0057B8', '#E31B23', '#FFC72C', '#00A9E0', '#78BE20', '#6E2585', '#F7941E', '#8B4513', '#FF69B4', '#32CD32']
+        }
+      }] : [{
+        x: labels,
+        y: values,
+        type: 'bar',
+        marker: {
+          color: '#0057B8'
+        },
+        text: values.map(v => `${v} students`),
+        textposition: 'auto'
+      }];
+
+      const layout = {
+        title: {
+          text: 'Support Activities by School',
+          font: { size: 18, color: '#0057B8' }
+        },
+        height: 600,
+        showlegend: chartType === 'pie',
+        font: { family: 'Segoe UI, Arial, sans-serif' }
+      };
+
+      if (chartType === 'bar') {
+        layout.xaxis = { 
+          title: 'Schools',
+          tickangle: -45
+        };
+        layout.yaxis = { title: 'Total Students with Goals' };
+        layout.margin = { bottom: 120 };
+      }
+
+      Plotly.newPlot('school-distribution-chart', chartData, layout, {responsive: true});
+    }
+
+    function updateYearlyTrendChart(filteredData) {
+      // Simple trend showing total activities over time (placeholder implementation)
+      const categories = ['Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness'];
+      
+      const chartData = [{
+        x: categories,
+        y: categories.map(category => {
+          let total = 0;
+          filteredData.forEach(row => {
+            total += parseInt(row[`${category}: CM students w/ goal`]) || 0;
+          });
+          return total;
+        }),
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#0057B8', width: 3 },
+        marker: { color: '#0057B8', size: 8 },
+        name: 'Students with Goals'
+      }];
+
+      const layout = {
+        title: {
+          text: 'Support Activity Trends by Category',
+          font: { size: 18, color: '#0057B8' }
+        },
+        height: 550,
+        xaxis: { 
+          title: 'Support Categories',
+          tickangle: -45
+        },
+        yaxis: { title: 'Number of Students' },
+        font: { family: 'Segoe UI, Arial, sans-serif' },
+        margin: { bottom: 120 }
+      };
+
+      Plotly.newPlot('yearly-trend-chart', chartData, layout, {responsive: true});
+    }
   </script>
 </body>
 </html>

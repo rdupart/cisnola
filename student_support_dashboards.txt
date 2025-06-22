@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Chart from CSV Data</title>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Support Dashboards</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
   <style>
     body {
@@ -42,9 +44,11 @@
       background: #fff;
       border-radius: 14px;
       box-shadow: 0 2px 16px rgba(0, 87, 184, 0.07);
-      padding: 18px;
-      margin-bottom: 20px;
+      padding: 30px;
+      margin: 30px auto;
       border-top: 3px solid #0057B8;
+      max-width: 1400px;
+      min-height: 500px;
     }
     .chart-container:hover {
       box-shadow: 0 6px 24px rgba(0, 87, 184, 0.17);
@@ -52,7 +56,54 @@
   </style>
 </head>
 <body>
-  <div class="controls">
+  <!-- Header Section -->
+  <header class="site-header">
+    <div class="logo-container">
+      <div class="site-logo"></div>
+      <h1 class="site-title">CISEPA Dashboard</h1>
+    </div>
+    <div class="search-container">
+      <input type="text" placeholder="Search this site" class="search-bar">
+    </div>
+    <div class="accessibility-links">
+      <a href="#main-content" class="skip-link">Skip to main content</a>
+      <a href="#navigation" class="skip-link">Skip to navigation</a>
+    </div>
+  </header>
+
+  <!-- Navigation Bar -->
+  <nav id="navigation" class="main-nav">
+    <ul class="nav-list">
+      <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+      <li class="nav-item dropdown">
+        <a href="#" class="nav-link dropdown-toggle">Current Dashboards</a>
+        <ul class="dropdown-menu">
+          <li><a href="index.html">Student Services Overview</a></li>
+          <li><a href="tier_activities.html">Tier Support Activities</a></li>
+        </ul>
+      </li>
+      <li class="nav-item dropdown">
+        <a href="#" class="nav-link dropdown-toggle">Annual Outcomes</a>
+        <ul class="dropdown-menu">
+          <li><a href="student_engagement.html">Students Served</a></li>
+          <li><a href="student_progress_tracker.html">Student Progress</a></li>
+          <li><a href="demographics.html">Demographics</a></li>
+          <li><a href="attributes.html">Student Attributes</a></li>
+        </ul>
+      </li>
+      <li class="nav-item dropdown">
+        <a href="#" class="nav-link dropdown-toggle">More...</a>
+        <ul class="dropdown-menu">
+          <li><a href="school.html">School Dashboard</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <main id="main-content">
+    <section class="content-section">
+      <h2 class="section-title">Student Support Dashboards</h2>
+      <div class="controls">
     <div>
       <label for="yearSelect">Select Year:</label>
       <select id="yearSelect" onchange="loadData()">
@@ -171,17 +222,9 @@
       // Aggregate data from actual columns
       filteredData.forEach(row => {
         Object.keys(supportMetrics).forEach(category => {
-          // Look for Tier II and III support columns
-          const tier2Col = `${category}: # of Tier II Supports` || `${category}: Tier II Hours` || 
-                          `${category}: CM students w/ goal`; // Fallback to goals
-          const tier3Col = `${category}: # of Tier III Supports` || `${category}: Tier III Hours` ||
-                          `${category}: CM students met goal`; // Fallback to met goals
-
-          // Try multiple column variations
-          const tier2Value = parseFloat(row[tier2Col]) || 
-                            parseFloat(row[`${category}: CM students w/ goal`]) || 0;
-          const tier3Value = parseFloat(row[tier3Col]) || 
-                            parseFloat(row[`${category}: CM students met goal`]) || 0;
+          // Use the goal and met goal columns as proxies for support data
+          const tier2Value = parseFloat(row[`${category}: CM students w/ goal`]) || 0;
+          const tier3Value = parseFloat(row[`${category}: CM students met goal`]) || 0;
 
           supportMetrics[category].tier2 += tier2Value;
           supportMetrics[category].tier3 += tier3Value;
@@ -215,7 +258,7 @@
             textposition: 'auto'
           }];
 
-      Plotly.newPlot('tier2-chart', tier2Data, {
+      const tier2Layout = {
         title: {
           text: `Tier II Supports - ${selectedSchool === 'all' ? 'All Schools' : selectedSchool}`,
           font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
@@ -223,17 +266,22 @@
         paper_bgcolor: '#fff',
         plot_bgcolor: '#fff',
         margin: { t: 60, b: 100, l: 50, r: 30 },
-        height: 400,
-        xaxis: chartType === 'bar' ? { 
+        height: 400
+      };
+
+      if (chartType === 'bar') {
+        tier2Layout.xaxis = { 
           title: 'Category',
           tickangle: -45,
           titlefont: { size: 14, color: '#333' }
-        } : undefined,
-        yaxis: chartType === 'bar' ? { 
+        };
+        tier2Layout.yaxis = { 
           title: 'Support Count',
           titlefont: { size: 14, color: '#333' }
-        } : undefined
-      }, {responsive: true});
+        };
+      }
+
+      Plotly.newPlot('tier2-chart', tier2Data, tier2Layout, {responsive: true});
 
       // Create Tier 3 Chart
       const tier3Data = (chartType === 'pie')
@@ -257,7 +305,7 @@
             textposition: 'auto'
           }];
 
-      Plotly.newPlot('tier3-chart', tier3Data, {
+      const tier3Layout = {
         title: {
           text: `Tier III Supports - ${selectedSchool === 'all' ? 'All Schools' : selectedSchool}`,
           font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
@@ -265,17 +313,22 @@
         paper_bgcolor: '#fff',
         plot_bgcolor: '#fff',
         margin: { t: 60, b: 100, l: 50, r: 30 },
-        height: 400,
-        xaxis: chartType === 'bar' ? { 
+        height: 400
+      };
+
+      if (chartType === 'bar') {
+        tier3Layout.xaxis = { 
           title: 'Category',
           tickangle: -45,
           titlefont: { size: 14, color: '#333' }
-        } : undefined,
-        yaxis: chartType === 'bar' ? { 
+        };
+        tier3Layout.yaxis = { 
           title: 'Support Count',
           titlefont: { size: 14, color: '#333' }
-        } : undefined
-      }, {responsive: true});
+        };
+      }
+
+      Plotly.newPlot('tier3-chart', tier3Data, tier3Layout, {responsive: true});
 
       // Create Combined Chart
       const combinedData = (chartType === 'pie')
@@ -299,7 +352,7 @@
             textposition: 'auto'
           }];
 
-      Plotly.newPlot('combined-chart', combinedData, {
+      const combinedLayout = {
         title: {
           text: `Combined Tier II and III Supports - ${selectedSchool === 'all' ? 'All Schools' : selectedSchool}`,
           font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
@@ -307,22 +360,31 @@
         paper_bgcolor: '#fff',
         plot_bgcolor: '#fff',
         margin: { t: 60, b: 100, l: 50, r: 30 },
-        height: 400,
-        xaxis: chartType === 'bar' ? { 
+        height: 400
+      };
+
+      if (chartType === 'bar') {
+        combinedLayout.xaxis = { 
           title: 'Category',
           tickangle: -45,
           titlefont: { size: 14, color: '#333' }
-        } : undefined,
-        yaxis: chartType === 'bar' ? { 
+        };
+        combinedLayout.yaxis = { 
           title: 'Total Support Count',
           titlefont: { size: 14, color: '#333' }
-        } : undefined
-      }, {responsive: true});
+        };
+      }
+
+      Plotly.newPlot('combined-chart', combinedData, combinedLayout, {responsive: true});
     }
 
 
     // Load initial dataset
     loadData();
   </script>
+  
+  <script src="js/navigation.js"></script>
+    </section>
+  </main>
 </body>
 </html>
